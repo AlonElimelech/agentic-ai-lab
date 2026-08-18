@@ -3,13 +3,16 @@
 Two self-contained training portals that teach an AI-assisted development workflow with
 OpenCode. Each is a **single HTML file** — no build step, no package manager, no
 framework, no CDN, no external fonts or images. Open one from `file://` on an air-gapped
-machine and it works fully, including progress saving, quizzes, scoring and the printable
-certificate.
+machine and it works fully, including progress saving, quizzes and scoring.
 
 | File | Format | Length | Scenario |
 |---|---|---|---|
 | `opencode-lab.html` | 14 chapters, 6 tracks | ~7h 50m | Fix a deliberately broken FastAPI service, `orders-api` |
 | `opencode-lab-express.html` | 7 modules | 60 min | Build a tic-tac-toe game end to end |
+
+The two are siblings, not versions of each other. They share the same block renderer and
+the same Store/Scorer/Router/Quiz shape, but each keeps its own `localStorage` key so
+progress in one can never overwrite the other.
 
 ## Running
 
@@ -39,6 +42,9 @@ skills. Good as a lunch-and-learn or a first exposure.
 6. Validate the Edges — 9 min
 7. Skills and Best Practices — 7 min
 
+Express has checkpoints and a final quiz, but no search, no templates and no certificate —
+it points at the full lab for those.
+
 **Full lab (~8 hours)** — the enterprise course. Fourteen chapters across six tracks,
 built on one continuous scenario: an existing FastAPI service carrying real defects (SQL
 built by string concatenation, a hardcoded token, money stored as `float`, inconsistent
@@ -66,15 +72,23 @@ Every chapter follows the same fixed shape: why it matters → objectives → co
 enterprise context → exercise → expected result → validation → best practices → common
 mistakes → summary → checkpoint quiz.
 
-Alongside the chapters the full lab carries a reference section (13 topics), copy-ready
-templates for the files the course teaches you to write, cheat sheets, a searchable index
-across chapters and topics, achievements, and a final assessment.
+Alongside the chapters, the full lab carries:
+
+- **18 reference topics** — cross-cutting concepts (context engineering, decision records,
+  security with AI, when *not* to use AI), each tagged and linked back to its chapter
+- **15 copy-ready templates** — `AGENTS.md`, `architecture.md`, `decisions.md`,
+  `known-issues.md`, `SKILL.md`, review and commit checklists, and more
+- **52 checkpoint questions** across the chapters, plus a **79-question bank** behind the
+  final assessment
+- **8 achievements** and four readiness levels (Beginner → Practitioner → Advanced →
+  Enterprise Ready)
+- Search across chapters and topics, and printable cheat sheets
 
 ## Progress, scoring and the certificate
 
-Progress lives in one `localStorage` key, `opencode-lab-v1`, on the machine that opened
-the file. Nothing is transmitted anywhere. Clearing site data for `file://` resets the
-course.
+Progress is stored locally, in one `localStorage` key per lab — `opencode-lab-v1` for the
+full course and `opencode-express-v1` for express — on the machine that opened the file.
+Nothing is transmitted anywhere. Clearing site data for `file://` resets progress.
 
 Two quiz behaviours, deliberately different:
 
@@ -84,10 +98,10 @@ Two quiz behaviours, deliberately different:
 - **The final assessment** takes one answer per question, with a whole-quiz retake. Making
   it forgiving would put every learner at 100% and make the certificate meaningless.
 
-The certificate is withheld until **all 14 chapters are complete and the final assessment
-is passed at 80% or better**. It is dated on first print and that date stays stable on
-reprint. Printing forces the light palette and hides navigation chrome so it fits one
-page.
+The certificate belongs to the full lab only, and is withheld until **all 14 chapters are
+complete and the final assessment is passed at 80% or better**. It is dated on first print
+and that date stays stable on reprint. Printing forces the light palette and hides
+navigation chrome so it fits one page.
 
 In-flight quiz state is intentionally *not* saved — refreshing mid-assessment loses it, so
 a half-finished assessment cannot be resumed.
@@ -98,14 +112,17 @@ Each file is `<style>` → markup shell → `<script>`, one of each. The script 
 banner comments into numbered regions; navigate by those banners rather than line numbers.
 
 ```
-1. CONTENT DATA   chapters, topics, quiz bank, templates, cheat sheets, achievements
-2. STORE          one localStorage key, subscribe/notify
-3. SCORER         all derived numbers, pure over state
-4. RENDER         escaping, markdown, code blocks, one function per view
-5. QUIZ           one engine, two consumers
-6. SEARCH         flattened index over chapters + topics
-7. ROUTER + BOOT  hash routing, delegated events
+opencode-lab.html                     opencode-lab-express.html
+1. CONTENT DATA                       1. CONTENT DATA
+2. STORE                              2. STORE
+3. SCORER                             3. SCORER
+4. RENDER                             4. RENDER
+5. QUIZ                               5. QUIZ
+6. SEARCH                             6. ROUTER + BOOT
+7. ROUTER + BOOT
 ```
+
+Express has no search region — that is the only structural difference.
 
 The central contract: **learning content is data, never markup.** One renderer emits the
 fixed pedagogy order for every chapter, so adding a chapter means appending one object to
@@ -118,15 +135,19 @@ the content itself contains backticks and `${}`-looking text.
 
 ## Verifying a change
 
-There is no test runner or linter, by design. These are the real checks:
+There is no test runner or linter, by design. These are the real checks — run them against
+whichever file you touched, or both:
 
 ```bash
 # Syntax-check the inline JavaScript
-node -e "require('fs').writeFileSync('.check.js',require('fs').readFileSync('opencode-lab.html','utf8').match(/<script>([\s\S]*)<\/script>/)[1])" \
-  && node --check .check.js && rm .check.js
+for f in opencode-lab.html opencode-lab-express.html; do
+  node -e "require('fs').writeFileSync('.check.js',require('fs').readFileSync('$f','utf8').match(/<script>([\s\S]*)<\/script>/)[1])" \
+    && node --check .check.js && echo "$f OK"
+done; rm -f .check.js
 
 # Offline integrity — must print nothing
-grep -nE '(src|href)="https?://|@import|fetch\(|XMLHttpRequest|WebSocket' opencode-lab.html
+grep -nE '(src|href)="https?://|@import|fetch\(|XMLHttpRequest|WebSocket' \
+  opencode-lab.html opencode-lab-express.html
 ```
 
 The only permitted `http` strings are the SVG namespace inside the `data:` favicon and the
@@ -144,6 +165,8 @@ These are product decisions, not incidental:
 
 - **`AGENTS.md` is plural everywhere.** The singular is never loaded by OpenCode and
   appears only as a taught Common Mistake.
+- **The two labs must keep separate storage keys.** Express deliberately does not reuse
+  `opencode-lab-v1`.
 - **Rendering scrolls to top only on a real route change**, otherwise it restores scroll
   position — ticking a step must not jump the page.
 - **Copy buttons keep the `execCommand` fallback**, since `file://` is not always a secure
