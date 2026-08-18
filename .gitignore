@@ -1,0 +1,5 @@
+# Machine-local Claude Code settings (permission grants, not project config)
+.claude/settings.local.json
+
+# Scratch from the JS syntax check
+.check.js

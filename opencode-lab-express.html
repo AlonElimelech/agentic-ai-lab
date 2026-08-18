@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OpenCode Express Lab — 60 Minutes, One Game</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%234f46e5'/><path d='M18 18l12 12M30 18L18 30' stroke='%23fff' stroke-width='6' stroke-linecap='round'/><circle cx='42' cy='42' r='9' fill='none' stroke='%23fff' stroke-width='6'/></svg>" />
+<style>
+/* ============================================================
+   DESIGN TOKENS — shared language with the full lab
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f4f5f9;
+  --surface: #ffffff;
+  --surface-2: #fafbfd;
+  --sidebar: #ffffff;
+  --brand: #4f46e5;
+  --brand-soft: #ede9fe;
+  --brand-text: #4338ca;
+  --text: #1a1a2e;
+  --text-2: #4b5563;
+  --muted: #6b7280;
+  --border: #e4e6ee;
+  --border-2: #eef0f6;
+  --code-bg: #1e1e2e;
+  --code-text: #e6e6f0;
+  --ok: #059669;
+  --ok-soft: #ecfdf5;
+  --warn: #b45309;
+  --warn-soft: #fffbeb;
+  --danger: #dc2626;
+  --danger-soft: #fef2f2;
+  --info: #0369a1;
+  --info-soft: #f0f9ff;
+  --radius: 14px;
+  --radius-sm: 9px;
+  --shadow: 0 1px 2px rgba(16,24,40,.04), 0 4px 20px rgba(16,24,40,.06);
+  --shadow-lg: 0 12px 40px rgba(16,24,40,.13);
+  --sans: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  --mono: 'Cascadia Mono', 'JetBrains Mono', Consolas, 'SF Mono', Menlo, monospace;
+}
+
+html[data-theme="dark"] {
+  --bg: #0b0b12;
+  --surface: #14141d;
+  --surface-2: #191924;
+  --sidebar: #101018;
+  --brand: #818cf8;
+  --brand-soft: rgba(129,140,248,.14);
+  --brand-text: #a5b4fc;
+  --text: #e8eaf2;
+  --text-2: #b8bdcc;
+  --muted: #8b91a3;
+  --border: #262636;
+  --border-2: #1e1e2b;
+  --code-bg: #0a0a10;
+  --code-text: #d7dced;
+  --ok: #34d399;
+  --ok-soft: rgba(52,211,153,.10);
+  --warn: #fbbf24;
+  --warn-soft: rgba(251,191,36,.10);
+  --danger: #f87171;
+  --danger-soft: rgba(248,113,113,.10);
+  --info: #38bdf8;
+  --info-soft: rgba(56,189,248,.10);
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 20px rgba(0,0,0,.35);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,.5);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+  font-size: 15.5px;
+}
+
+/* ============================================================
+   LAYOUT SHELL
+   ============================================================ */
+.shell { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 282px;
+  flex: 0 0 282px;
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 40;
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border-2);
+}
+.logo {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--brand);
+  display: grid; place-items: center;
+  color: #fff; font-weight: 800; font-size: .95rem;
+  flex: 0 0 36px; letter-spacing: -1px;
+}
+.brand-name { font-weight: 750; letter-spacing: -.35px; font-size: .97rem; line-height: 1.25; }
+.brand-sub {
+  display: inline-block; margin-top: 2px;
+  font-size: .64rem; letter-spacing: .9px; text-transform: uppercase; font-weight: 800;
+  background: var(--brand-soft); color: var(--brand-text);
+  padding: 2px 8px; border-radius: 99px;
+}
+
+.side-progress { padding: 15px 20px; border-bottom: 1px solid var(--border-2); }
+.sp-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.sp-label { font-size: .74rem; text-transform: uppercase; letter-spacing: .55px; color: var(--muted); font-weight: 700; }
+.sp-pct { font-size: .88rem; font-weight: 750; color: var(--brand-text); }
+.bar { height: 7px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--brand); border-radius: 99px; transition: width .3s ease; }
+.sp-meta { display: flex; justify-content: space-between; margin-top: 9px; font-size: .755rem; color: var(--muted); }
+.sp-meta b { color: var(--text-2); font-weight: 700; }
+
+.nav { flex: 1; overflow-y: auto; padding: 12px 12px 28px; }
+.nav-head {
+  padding: 10px 10px 6px;
+  font-size: .715rem; font-weight: 750; letter-spacing: .6px; text-transform: uppercase;
+  color: var(--muted);
+}
+.nav-item {
+  width: 100%;
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font: inherit; font-size: .875rem;
+  color: var(--text-2);
+  background: none; border: 0; cursor: pointer; text-align: left;
+  line-height: 1.35;
+  transition: background .13s, color .13s;
+}
+.nav-item:hover { background: var(--surface-2); color: var(--text); }
+.nav-item.active { background: var(--brand-soft); color: var(--brand-text); font-weight: 650; }
+.nav-item .n {
+  flex: 0 0 22px; height: 22px;
+  display: grid; place-items: center;
+  border-radius: 6px;
+  background: var(--border-2);
+  font-size: .7rem; font-weight: 750; color: var(--muted);
+}
+.nav-item.active .n { background: var(--brand); color: #fff; }
+.nav-item.done .n { background: var(--ok); color: #fff; }
+.nav-item .t { flex: 1; min-width: 0; }
+.nav-item .mins { font-size: .7rem; color: var(--muted); font-weight: 650; }
+
+/* ---- main ---- */
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 30;
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 26px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.menu-btn { display: none; }
+.spacer { flex: 1; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 13px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 99px; font-size: .8rem; font-weight: 650; white-space: nowrap;
+}
+.chip .v { color: var(--brand-text); font-weight: 800; }
+.chip.time { background: var(--brand-soft); border-color: transparent; color: var(--brand-text); }
+
+.icon-btn {
+  width: 36px; height: 36px; flex: 0 0 36px;
+  display: grid; place-items: center;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; cursor: pointer; font-size: 1rem;
+  color: var(--text-2);
+  transition: background .13s, color .13s, border-color .13s;
+}
+.icon-btn:hover { background: var(--brand-soft); color: var(--brand-text); border-color: var(--brand); }
+
+.view { padding: 34px 26px 90px; max-width: 900px; width: 100%; margin: 0 auto; }
+
+/* ============================================================
+   TYPOGRAPHY & PRIMITIVES
+   ============================================================ */
+h1 { font-size: 2.05rem; font-weight: 800; letter-spacing: -.9px; line-height: 1.18; }
+h2 { font-size: 1.28rem; font-weight: 750; letter-spacing: -.45px; margin-bottom: 12px; }
+p { color: var(--text-2); }
+p + p { margin-top: 11px; }
+
+code:not(pre code) {
+  font-family: var(--mono);
+  font-size: .855em;
+  background: var(--brand-soft);
+  color: var(--brand-text);
+  padding: 1.5px 6px;
+  border-radius: 5px;
+  word-break: break-word;
+}
+strong { color: var(--text); font-weight: 700; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 22px 24px;
+  margin-bottom: 18px;
+}
+.card > h2:first-child { margin-top: 0; }
+
+.sec-label {
+  display: flex; align-items: center; gap: 9px;
+  font-size: .72rem; font-weight: 800; letter-spacing: .8px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 12px;
+}
+.sec-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+ul.bullets { padding-left: 0; list-style: none; }
+ul.bullets li { position: relative; padding-left: 22px; color: var(--text-2); margin-bottom: 7px; }
+ul.bullets li::before {
+  content: ''; position: absolute; left: 6px; top: .66em;
+  width: 5px; height: 5px; border-radius: 50%; background: var(--brand);
+}
+
+.module-head { margin-bottom: 26px; }
+.crumb { font-size: .78rem; color: var(--muted); font-weight: 650; letter-spacing: .3px; text-transform: uppercase; margin-bottom: 9px; }
+.module-head h1 { margin-bottom: 12px; }
+.meta-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 11px; border-radius: 99px;
+  font-size: .755rem; font-weight: 700;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text-2);
+}
+.pill.time { background: var(--brand-soft); color: var(--brand-text); border-color: transparent; }
+.pill.solved { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+.pill.retry { background: var(--danger-soft); color: var(--danger); border-color: transparent; }
+
+/* ---- callouts ---- */
+.callout {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--muted);
+  border-radius: var(--radius-sm);
+  padding: 14px 17px;
+  margin: 15px 0;
+  background: var(--surface-2);
+}
+.callout .ct { font-weight: 750; font-size: .875rem; margin-bottom: 4px; display: flex; gap: 8px; align-items: center; }
+.callout p { font-size: .91rem; }
+.callout.tip { border-left-color: var(--ok); background: var(--ok-soft); }
+.callout.tip .ct { color: var(--ok); }
+.callout.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+.callout.warn .ct { color: var(--warn); }
+.callout.danger { border-left-color: var(--danger); background: var(--danger-soft); }
+.callout.danger .ct { color: var(--danger); }
+.callout.info { border-left-color: var(--info); background: var(--info-soft); }
+.callout.info .ct { color: var(--info); }
+.callout.best { border-left-color: var(--brand); background: var(--brand-soft); }
+.callout.best .ct { color: var(--brand-text); }
+
+/* ---- code ---- */
+.code {
+  background: var(--code-bg);
+  border-radius: var(--radius-sm);
+  margin: 14px 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.code-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px 7px 14px;
+  background: rgba(255,255,255,.05);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.code-name { font-family: var(--mono); font-size: .755rem; color: #9aa2c0; flex: 1; letter-spacing: .2px; }
+.copy {
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  color: #cbd2e8;
+  border-radius: 7px; padding: 3px 10px;
+  font: inherit; font-size: .735rem; font-weight: 650; cursor: pointer;
+  transition: background .13s, color .13s;
+}
+.copy:hover { background: var(--brand); color: #fff; border-color: transparent; }
+.copy.ok { background: var(--ok); color: #fff; border-color: transparent; }
+.code pre { margin: 0; padding: 14px 16px; overflow-x: auto; }
+.code code { font-family: var(--mono); font-size: .82rem; line-height: 1.62; color: var(--code-text); white-space: pre; }
+
+/* ---- tables ---- */
+.table-wrap { overflow-x: auto; margin: 14px 0; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+table { border-collapse: collapse; width: 100%; font-size: .885rem; }
+th, td { padding: 9.5px 14px; text-align: left; border-bottom: 1px solid var(--border-2); vertical-align: top; }
+th { background: var(--surface-2); font-weight: 750; font-size: .77rem; text-transform: uppercase; letter-spacing: .45px; color: var(--muted); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td { color: var(--text-2); }
+
+/* ---- checkable ---- */
+.check {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color .13s, background .13s;
+  text-align: left; width: 100%; font: inherit; color: inherit;
+}
+.check:hover { border-color: var(--brand); }
+.check .box {
+  flex: 0 0 20px; height: 20px; margin-top: 1px;
+  border: 2px solid var(--border); border-radius: 6px;
+  display: grid; place-items: center;
+  font-size: .72rem; color: transparent;
+  transition: background .13s, border-color .13s, color .13s;
+}
+.check.on { background: var(--ok-soft); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
+.check.on .box { background: var(--ok); border-color: var(--ok); color: #fff; }
+.check.on .lbl { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1px; }
+.check .lbl { flex: 1; font-size: .91rem; color: var(--text-2); }
+.check .lbl em { display: block; font-style: normal; font-size: .81rem; color: var(--muted); margin-top: 3px; }
+
+/* ---- steps ---- */
+.step { display: flex; gap: 14px; margin-bottom: 20px; }
+.step-n {
+  flex: 0 0 27px; height: 27px; border-radius: 50%;
+  background: var(--brand); color: #fff;
+  display: grid; place-items: center;
+  font-size: .79rem; font-weight: 750;
+}
+.step-body { flex: 1; min-width: 0; }
+.step-body > .t { font-weight: 700; margin-bottom: 3px; }
+
+/* ---- quiz ---- */
+.quiz-q { font-size: 1.03rem; font-weight: 700; margin-bottom: 15px; line-height: 1.45; }
+.opt {
+  display: flex; gap: 11px; align-items: flex-start;
+  width: 100%; text-align: left; font: inherit;
+  padding: 12px 15px; margin-bottom: 9px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text-2); cursor: pointer;
+  transition: border-color .13s, background .13s;
+}
+.opt:hover:not(:disabled) { border-color: var(--brand); background: var(--brand-soft); }
+.opt:disabled { cursor: default; }
+.opt .k {
+  flex: 0 0 23px; height: 23px; border-radius: 6px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  display: grid; place-items: center; font-size: .76rem; font-weight: 750; color: var(--muted);
+}
+.opt.right { border-color: var(--ok); background: var(--ok-soft); color: var(--text); }
+.opt.right .k { background: var(--ok); border-color: var(--ok); color: #fff; }
+.opt.wrong { border-color: var(--danger); background: var(--danger-soft); color: var(--text); }
+.opt.wrong .k { background: var(--danger); border-color: var(--danger); color: #fff; }
+.explain { margin-top: 12px; }
+.quiz-bar { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.quiz-bar .bar { flex: 1; }
+.quiz-count { font-size: .8rem; color: var(--muted); font-weight: 700; white-space: nowrap; }
+
+/* ---- buttons ---- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 20px; border-radius: 10px;
+  font: inherit; font-size: .89rem; font-weight: 700;
+  border: 1px solid transparent; cursor: pointer;
+  background: var(--brand); color: #fff;
+  transition: filter .13s, background .13s;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn.ghost { background: var(--surface); color: var(--text-2); border-color: var(--border); }
+.btn.ghost:hover { border-color: var(--brand); color: var(--brand-text); background: var(--brand-soft); }
+.btn:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+/* ---- completion ---- */
+.complete-card {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); padding: 20px 22px; margin-top: 22px;
+  display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+}
+.complete-card.on { border-color: var(--ok); background: var(--ok-soft); }
+.complete-card .cc-txt { flex: 1; min-width: 200px; }
+.complete-card .cc-txt b { display: block; font-size: 1rem; }
+.complete-card .cc-txt span { font-size: .85rem; color: var(--muted); }
+
+.pager { display: flex; justify-content: space-between; gap: 12px; margin-top: 30px; }
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+.hero {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 30px 32px; margin-bottom: 20px;
+}
+.hero h1 { margin-bottom: 10px; }
+.hero .lead { font-size: 1.03rem; max-width: 620px; }
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+.stat {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 17px 19px; box-shadow: var(--shadow);
+}
+.stat .sv { font-size: 1.72rem; font-weight: 800; letter-spacing: -1px; line-height: 1.15; }
+.stat .sl { font-size: .755rem; text-transform: uppercase; letter-spacing: .55px; color: var(--muted); font-weight: 700; margin-top: 3px; }
+.stat .sh { font-size: .78rem; color: var(--muted); margin-top: 6px; }
+
+.agenda { display: grid; gap: 8px; }
+.agenda-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 13px; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); background: var(--surface);
+  cursor: pointer; font: inherit; text-align: left; width: 100%; color: inherit;
+  transition: border-color .13s, background .13s;
+}
+.agenda-row:hover { border-color: var(--brand); background: var(--brand-soft); }
+.agenda-row.done { background: var(--ok-soft); border-color: color-mix(in srgb, var(--ok) 35%, transparent); }
+.agenda-row .an {
+  flex: 0 0 24px; height: 24px; border-radius: 7px;
+  background: var(--border-2); color: var(--muted);
+  display: grid; place-items: center; font-size: .74rem; font-weight: 750;
+}
+.agenda-row.done .an { background: var(--ok); color: #fff; }
+.agenda-row .at { flex: 1; font-size: .9rem; font-weight: 650; }
+.agenda-row .am { font-size: .78rem; color: var(--muted); font-weight: 650; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1080px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 860px) {
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0;
+    transform: translateX(-100%);
+    transition: transform .22s ease;
+    box-shadow: var(--shadow-lg);
+  }
+  body.nav-open .sidebar { transform: none; }
+  body.nav-open .scrim { display: block; }
+  .scrim { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 35; }
+  .menu-btn { display: grid; }
+  .view { padding: 24px 17px 80px; }
+  .hero { padding: 24px 20px; }
+  .card { padding: 18px 17px; }
+  h1 { font-size: 1.65rem; }
+}
+@media (max-width: 560px) {
+  .stats { grid-template-columns: 1fr 1fr; }
+  .chip.score { display: none; }
+}
+
+/* ============================================================
+   PRINT
+   ============================================================ */
+@media print {
+  .sidebar, .topbar, .scrim, .pager, .btn, .copy { display: none !important; }
+  body { background: #fff; }
+  .view { padding: 0; max-width: none; }
+  .card { break-inside: avoid; box-shadow: none; }
+  @page { margin: 14mm; }
+}
+</style>
+</head>
+<body>
+
+<div class="scrim" data-action="close-nav"></div>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand-row">
+      <div class="logo">X&middot;O</div>
+      <div>
+        <div class="brand-name">OpenCode Lab</div>
+        <span class="brand-sub">Express &middot; 60 min</span>
+      </div>
+    </div>
+
+    <div class="side-progress">
+      <div class="sp-top">
+        <span class="sp-label">Progress</span>
+        <span class="sp-pct" id="sidePct">0%</span>
+      </div>
+      <div class="bar"><i id="sideBar" style="width:0%"></i></div>
+      <div class="sp-meta">
+        <span><b id="sideDone">0</b> / <span id="sideTotal">0</span> modules</span>
+        <span><b id="sideLeft">0</b> min left</span>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav"></nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn menu-btn" data-action="toggle-nav" aria-label="Toggle navigation">&#9776;</button>
+      <span class="chip time" id="topTime">60 min</span>
+      <div class="spacer"></div>
+      <span class="chip score">Score <span class="v" id="topScore">0</span></span>
+      <button class="icon-btn" data-action="theme" id="themeBtn" aria-label="Toggle theme">&#9681;</button>
+    </header>
+
+    <main class="view" id="view"></main>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   OpenCode Express Lab — 60 minutes, one flat mission.
+   Single file, offline, dependency-free.
+
+   Sibling of opencode-lab.html and shares its contracts:
+   the block renderer, esc/md, and the Store/Scorer/Router/Quiz
+   shape. It uses its OWN localStorage key so the two labs can
+   never overwrite each other's progress.
+
+   Regions:
+     1. CONTENT DATA  — modules, quiz bank (no DOM)
+     2. STORE         — one localStorage key
+     3. SCORER        — derived numbers, pure over state
+     4. RENDER        — block renderer + views
+     5. QUIZ          — checkpoints and the final
+     6. ROUTER + BOOT — hash routing, delegated events
+   ============================================================ */
+
+/* ============================================================
+   1. CONTENT DATA
+   ------------------------------------------------------------
+   Block shapes understood by blocks():
+     {p:'text'} {list:[..]} {code:{name,body}}
+     {table:{head:[],rows:[[]]}} {note:{kind,title,body}}
+   Inline markup: `code` and **bold**. Escaped first.
+
+   Slot set is deliberately lighter than the full lab's —
+   an 8-minute module cannot carry 14 sections.
+   ============================================================ */
+
+const MODULES = [
+{
+  id: 1,
+  title: 'Context Before Code',
+  short: 'Context & AGENTS.md',
+  minutes: 8,
+  why: 'You are about to ask an agent to build something from nothing. Every constraint you do not state, it will invent — and it invents toward what is most common on the internet, which for a browser game means a framework, a build step and three dependencies. `AGENTS.md` is where you say otherwise, **once**, before any code exists.',
+  objective: 'Create a project and an `AGENTS.md` that constrains the build before a single line is generated.',
+  concept: [
+    {p:'`AGENTS.md` sits at your project root and is loaded into context **every session, automatically**. You never reference it or remind the agent about it — it is simply true for every task in that repository.'},
+    {note:{kind:'warn',title:'The filename is plural',body:'`AGENTS.md`, not `AGENT.md`. The singular is never loaded, and nothing warns you — the file looks right, reads right, and every rule in it is silently ignored.'}},
+    {p:'For a one-hour build the file only needs three things: **what this is**, **hard constraints**, and a **definition of done** you can check in a browser.'},
+    {table:{head:['Put in `AGENTS.md`','Leave out'],rows:[
+      ['"One file. No frameworks, no CDN."','"Make it look nice" — unenforceable'],
+      ['"Cells must be `<button>`, not `<div>`"','"Use good practices" — means nothing'],
+      ['"No inline `onclick`; `addEventListener` only"','The specific game rules — those go in the task'],
+      ['"Opens from `file://` with no console errors"','Anything you have not decided yet']
+    ]}},
+    {p:'Note the last row of the right column. Game rules — draws, win detection, resets — belong in the **task**, not the standing orders. That distinction is the whole of Module 2.'}
+  ],
+  exercise: {
+    intro: 'Create the project and write its standing orders. Nothing is generated in this module.',
+    steps: [
+      { t:'Create the project', body:[
+        {code:{name:'terminal',body:'mkdir xo-game\ncd xo-game\ngit init'}}
+      ]},
+      { t:'Write AGENTS.md', body:[
+        {p:'Create this file at the project root, exactly:'},
+        {code:{name:'AGENTS.md',body:'# AGENTS.md\n\n## What this is\nA tic-tac-toe (X/O) game as ONE self-contained HTML file:\nindex.html. No build step. Opens directly from file://.\n\n## Hard constraints\n- One file. All CSS and JS inline.\n- No frameworks, no CDN, no npm, no external fonts or images.\n- Vanilla JavaScript only.\n- Board cells must be <button> elements, never <div>.\n- No inline onclick attributes. addEventListener only.\n\n## Conventions\n- camelCase for functions, UPPER_SNAKE for constants.\n- All game state in ONE object. No state scattered in globals.\n- No comments explaining what a line does; only why, and rarely.\n\n## Definition of done\n- Opens in a browser from file:// and is playable.\n- No errors in the browser console.\n- Every interactive element is reachable with Tab and\n  activated with Enter or Space.'}}
+      ]},
+      { t:'Start OpenCode and check it is loaded', body:[
+        {code:{name:'terminal',body:'opencode'}},
+        {p:'Ask it a question that can only be answered from the file. Do not ask "did you read AGENTS.md" — it will say yes either way.'},
+        {code:{name:'opencode prompt',body:'Without looking anything up: what element must the board cells\nbe, and how many files may this project have?'}},
+        {p:'If it answers "`<button>`" and "one", the file is loading. If it does not, check the filename is plural before anything else.'}
+      ]},
+      { t:'Commit the baseline', body:[
+        {code:{name:'terminal',body:'git add AGENTS.md\ngit commit -m "Add AGENTS.md before any code exists"'}},
+        {p:'A clean baseline now means every diff later is honestly only what the agent changed.'}
+      ]}
+    ]
+  },
+  expected: 'A git repository containing only `AGENTS.md`, one commit, and a verified answer proving the agent is reading it.',
+  validation: [
+    'The file is named `AGENTS.md` — plural — at the project root',
+    'The agent answered "`<button>`" and "one file" without being told',
+    '`git log` shows one commit and `git status` is clean',
+    'No code has been generated yet'
+  ],
+  watchOut: {kind:'danger', title:'Do not skip the verification step', body:'A misspelled or misplaced `AGENTS.md` fails silently, and you will spend the next 50 minutes wondering why the agent keeps adding a framework. Ten seconds of checking now saves the session.'},
+  checkpoint: [
+    { q:'Which filename does OpenCode actually load at the project root?',
+      options:['`AGENT.md`','`AGENTS.md`','`.opencode/rules.md`','`agents.config`'],
+      answer:1,
+      explain:'Plural. The singular is the most common setup mistake there is — the file exists and looks correct, but it is never loaded, so every rule in it is silently ignored.' },
+    { q:'Which belongs in `AGENTS.md` rather than in a task?',
+      options:['"X goes first"','"One file, no frameworks, no CDN"','"Announce a draw when the board fills"','"Add a reset button"'],
+      answer:1,
+      explain:'It is a technical constraint true for every task in this repo. The other three are rules of this specific game, which belong in the task where they can be reviewed against the result.' }
+  ]
+},
+
+{
+  id: 2,
+  title: 'A Task, Not a Prompt',
+  short: 'Task, Not Prompt',
+  minutes: 9,
+  why: 'A prompt is a sentence you throw at a model. A task is a unit of work with a goal, constraints and a way to check it. Prompts produce demos; tasks produce software. You will see the difference on the same request, in the same repository, in about four minutes.',
+  objective: 'Turn "make tic-tac-toe" into a task specific enough that the result can be checked rather than admired.',
+  concept: [
+    {p:'Every strong task carries four things. Miss any one and the agent fills the gap itself, silently, in whatever way makes its job easiest.'},
+    {table:{head:['Part','For this mission'],rows:[
+      ['**Goal**','A playable X/O game in `index.html`'],
+      ['**Context**','`AGENTS.md` (already loaded), the empty repo'],
+      ['**Constraints**','No framework, one file, `<button>` cells'],
+      ['**How you will check**','The exact rules the finished game must obey']
+    ]}},
+    {p:'The fourth is the one people drop, and it is the expensive one. "How you will check" is not a formality — it is the list the result gets **reviewed against** in Module 5. Anything you leave off that list is something you have quietly decided not to care about.'},
+    {note:{kind:'best',title:'The rules you must state for this game',body:'X always goes first. A win is announced. A full board with no winner is announced as a draw. An occupied cell cannot be overwritten. Play stops once the game is over. A reset button starts a genuinely clean game. Leave any of these out and there is a good chance you will not get it.'}}
+  ],
+  exercise: {
+    intro: 'Send the weak version first. You need to see what under-specifying actually produces before the strong version means anything.',
+    steps: [
+      { t:'Send the weak prompt on purpose', body:[
+        {p:'Fresh session (`/new`). Type exactly this, and nothing more:'},
+        {code:{name:'opencode prompt',body:'make a tic tac toe game'}},
+        {p:'Do not accept the result. Read what it proposes and note two things: what did it decide for you, and what did it not mention at all?'}
+      ]},
+      { t:'Throw it away', body:[
+        {code:{name:'terminal',body:'git checkout .\ngit status        # clean again'}},
+        {p:'The point of that prompt was the observation, not the code.'}
+      ]},
+      { t:'Write the real task', body:[
+        {p:'Start a **new** session and write the task properly. Notice how much of it is the checkable rules:'},
+        {code:{name:'opencode prompt',body:'Build the tic-tac-toe game described in AGENTS.md, in index.html.\n\nRules the finished game must obey:\n  - a 3x3 board of <button> cells\n  - X always goes first, then players alternate\n  - a win by row, column or either diagonal is detected and\n    announced in a status line\n  - a full board with no winner is announced as a draw\n  - clicking an occupied cell does nothing\n  - once the game is over, further clicks on the board do nothing\n  - a Reset button starts a completely clean game\n\nConstraints: one file, vanilla JS, no dependencies.\n\nNo code yet — I want the plan first. If anything above is\nambiguous, ask instead of guessing.'}}
+      ]},
+      { t:'Save the task as your checklist', body:[
+        {p:'Those seven rules are what Module 5 reviews against. Keep them where you can see them:'},
+        {code:{name:'terminal',body:'# paste the seven rules into a scratch file\n# you will tick them off in Module 5'}}
+      ]}
+    ]
+  },
+  expected: 'A discarded weak attempt you learned something from, and a written task containing goal, constraints and seven checkable rules — with no code generated yet.',
+  validation: [
+    'You can name two things the weak prompt decided for you',
+    '`git status` is clean — the weak attempt was discarded',
+    'Your task states all seven game rules explicitly',
+    'Your task ends with "no code yet" and an ambiguity clause'
+  ],
+  watchOut: {kind:'warn', title:'"Ask instead of guessing" is not decoration', body:'Without it, every ambiguous point is resolved silently in the agent\'s favour and you never learn that a decision was made at all.'},
+  checkpoint: [
+    { q:'Which part of a task do people most often leave out?',
+      options:['The goal','How you will check the result','The programming language','The file name'],
+      answer:1,
+      explain:'Goal and constraints feel obligatory; the check does not. But the check is the list you review the result against — anything missing from it is something you have decided not to care about.' },
+    { q:'You want a plan, not an implementation. What must the task contain?',
+      options:['A shorter goal','An explicit "no code yet"','Fewer constraints','A smaller model'],
+      answer:1,
+      explain:'Agents default toward action. Without an explicit instruction, "give me a plan" is very often answered with a plan followed immediately by the full implementation.' }
+  ]
+},
+
+{
+  id: 3,
+  title: 'Plan Before Code',
+  short: 'Plan First',
+  minutes: 7,
+  why: 'A plan costs thirty seconds to reject. The same wrong idea expressed as two hundred lines of generated HTML costs you the rest of the hour. This is the highest-leverage minute in the whole workflow, and it is the one people skip because the agent already looks ready to start.',
+  objective: 'Review a plan against three questions and reject it once, before any code exists.',
+  concept: [
+    {table:{head:['','Plan','Generated file'],rows:[
+      ['Time to read','30 seconds','10+ minutes'],
+      ['Cost to reject','Nothing','The work, plus the review that found it'],
+      ['Shows you','Intent and assumptions','Consequences'],
+      ['A wrong assumption looks like','One sentence you disagree with','Two hundred lines built on it']
+    ]}},
+    {p:'For a task this size, three questions are enough:'},
+    {list:[
+      '**Is the scope right?** Look hardest for work you did not ask for — a scoreboard, an AI opponent, animations, localStorage. All four are common unrequested extras on this exact task',
+      '**Are the assumptions true?** Does it assume a build step, a framework, or more than one file? Your `AGENTS.md` forbids all three',
+      '**Is anything missing?** Compare against your seven rules. Draw detection and "play stops after a win" are the two that vanish most often'
+    ]},
+    {note:{kind:'warn',title:'Read for nouns you did not introduce',body:'New structure appears in plans quietly. `style.css`, `game.js`, "a small state library", "a Minimax opponent" — every one of those is scope you never approved, and it is far cheaper to delete from a plan than from a file.'}}
+  ],
+  exercise: {
+    intro: 'You asked for the plan at the end of Module 2. Now actually review it.',
+    steps: [
+      { t:'Read the plan against the three questions', body:[
+        {p:'Write a one-line answer to each. Do not skim — skimming is how a false assumption becomes two hundred lines.'},
+        {list:[
+          'Scope: is there anything here I did not ask for?',
+          'Assumptions: does anything contradict `AGENTS.md`?',
+          'Missing: which of my seven rules does the plan not mention?'
+        ]}
+      ]},
+      { t:'Reject it, specifically', body:[
+        {p:'Almost every first plan on this task needs at least one cut. Name what and why — a vague rejection produces a vague retry:'},
+        {code:{name:'opencode prompt',body:'Three corrections before you build:\n\n1. No scoreboard and no AI opponent. Two human players only.\n2. Everything stays in index.html — no separate css or js file.\n3. The plan does not mention the draw case or stopping play\n   after a win. Both are required.\n\nShow me the revised plan. Still no code.'}},
+        {note:{kind:'tip',title:'Adjust to what you actually got',body:'If your plan did not propose a scoreboard, do not pretend it did. Reject what is really there — the skill is reading the plan, not running a script.'}}
+      ]},
+      { t:'Approve deliberately', body:[
+        {p:'When the revised plan covers all seven rules and adds nothing else, say so explicitly. That sentence is what makes the next module a build rather than an exploration.'},
+        {code:{name:'opencode prompt',body:'Approved. Build exactly that and nothing more.'}}
+      ]}
+    ]
+  },
+  expected: 'A first plan you rejected with specific reasons, and a revised plan covering all seven rules with no unrequested extras.',
+  validation: [
+    'You answered all three review questions in writing',
+    'You rejected the first plan with specific, named reasons',
+    'The revised plan covers all seven of your rules',
+    'The plan adds nothing you did not ask for',
+    'Still no code generated'
+  ],
+  watchOut: {kind:'danger', title:'"Sounds good, go ahead"', body:'That is the sentence that turns a five-second read into a forty-minute review. If you have never rejected a plan, you are not reading them.'},
+  checkpoint: [
+    { q:'Why is reviewing a plan higher leverage than reviewing the finished code?',
+      options:['Plans are more accurate','A wrong plan costs seconds to reject; the same error as code costs the session','Code is hard to read','It saves tokens'],
+      answer:1,
+      explain:'The asymmetry is the whole argument. A false assumption caught in one sentence never becomes two hundred lines built on top of it, plus the review time needed to discover that.' },
+    { q:'A plan proposes adding `game.js` and `style.css`. What is wrong?',
+      options:['Nothing — that is cleaner','It contradicts the one-file constraint in `AGENTS.md`','JS should come first','The names are poor'],
+      answer:1,
+      explain:'New structure appears in plans quietly, and this is exactly the "noun you did not introduce" case. Your standing orders say one self-contained file, so this is scope creep that would break the deliverable.' }
+  ]
+},
+
+{
+  id: 4,
+  title: 'Build It',
+  short: 'Build It',
+  minutes: 10,
+  why: 'Now the agent writes the code — and your job changes from specifying to verifying. The temptation here is to read the summary, see "I have implemented the game with win detection and a reset button", and believe it. The summary is a claim generated by the same process that wrote the code. The browser is the evidence.',
+  objective: 'Generate the game from the approved plan, run it immediately, and commit a baseline.',
+  concept: [
+    {p:'Two habits do most of the work in this module.'},
+    {list:[
+      '**Run it before you read it.** Thirty seconds in a browser tells you more than three minutes of reading, and it tells you the truth',
+      '**Ask what it did not do.** Omissions are invisible in generated code — nothing marks the place where draw detection should have been'
+    ]},
+    {code:{name:'the question worth asking every time',body:'Show me the diff, and tell me what you did NOT do that the\nplan mentioned.'}},
+    {note:{kind:'info',title:'Why that question works',body:'Additions are visible; absences are not. Asking directly about the gap between plan and implementation is the only cheap way to surface a rule that was quietly dropped.'}}
+  ],
+  exercise: {
+    intro: 'Build the game, run it, commit it. Do not fix anything yet — Module 5 is where you find out what is wrong.',
+    steps: [
+      { t:'Generate it', body:[
+        {code:{name:'opencode prompt',body:'Build it now, exactly as approved.\n\nWhen you are done, show me the diff and tell me what you did\nNOT do that the plan mentioned.'}}
+      ]},
+      { t:'Open it in a browser immediately', body:[
+        {code:{name:'terminal',body:'start index.html          # Windows\n# open index.html         # macOS\n# xdg-open index.html     # Linux'}},
+        {p:'Play one full game. Do not analyse — just play, and notice anything that feels wrong.'}
+      ]},
+      { t:'Open the console', body:[
+        {p:'Press F12 and look at the Console tab. Your `AGENTS.md` definition of done says no console errors, and this is the ten-second check that verifies it.'}
+      ]},
+      { t:'Commit the baseline before touching anything', body:[
+        {code:{name:'terminal',body:'git add index.html\ngit commit -m "Generate initial tic-tac-toe game"'}},
+        {note:{kind:'best',title:'Commit before you review, not after',body:'This is what makes Module 5 possible. Every fix you make from here shows up as a clean, readable diff against a known starting point.'}}
+      ]},
+      { t:'Note what it told you it skipped', body:[
+        {p:'Write down its answer to "what did you NOT do". You will check that claim against reality in the next module — sometimes it under-reports, occasionally it reports something it actually did.'}
+      ]}
+    ]
+  },
+  expected: 'A playable `index.html` committed as a baseline, a browser console you have actually looked at, and a written note of what the agent says it skipped.',
+  validation: [
+    'The game opens from `file://` and you played a full game',
+    'It is one file — no `style.css`, no `game.js`',
+    'You checked the browser console for errors',
+    '`git log` shows the baseline commit',
+    'You wrote down what it claimed not to have done'
+  ],
+  watchOut: {kind:'warn', title:'Do not start fixing yet', body:'Reviewing and fixing at the same time means you stop looking as soon as you find the first problem. Find everything first — that is the next module.'},
+  checkpoint: [
+    { q:'The agent says "I implemented win detection, draws and reset". What is that?',
+      options:['Verification','A claim, generated by the same process that wrote the code','A test result','A commit message'],
+      answer:1,
+      explain:'If the task was misunderstood, the summary confidently describes that misunderstanding. Only the running game and the diff are evidence.' },
+    { q:'Why commit the generated game before reviewing it?',
+      options:['To back it up','So every later fix appears as a clean diff against a known baseline','Git requires it','To measure how long it took'],
+      answer:1,
+      explain:'Diff-driven review only works when the diff is honest. Committing the raw generated output means everything you change afterwards is visibly, separately yours.' }
+  ]
+},
+
+{
+  id: 5,
+  title: 'Review What You Got',
+  short: 'Review',
+  minutes: 10,
+  why: 'The game works. That is exactly why this module is dangerous — working and correct are different properties, and generated code carries no signal of where it is weak. A human writes awkward code where they were unsure; an agent writes the same confident output whether it understood the task or not. This is the module that decides whether you are supervising the work or just receiving it.',
+  objective: 'Find at least two real defects in the generated game by checking it against your own seven rules.',
+  concept: [
+    {p:'Review has two halves and people only ever do the first. **Reading what changed** is easy — it is right there in the diff. **Finding what is missing** is the hard half, because an omission leaves no trace: nothing in the file marks the spot where draw detection should have been.'},
+    {p:'So you do not review by reading. You review against a **list** — and you already wrote it, in Module 2.'},
+    {note:{kind:'best',title:'The hunt list for this exact task',body:'These are the omissions agents reliably make on tic-tac-toe. Test each one in the browser rather than reading for it — it takes ninety seconds and it is far more reliable than reading.'}},
+    {table:{head:['#','Test in the browser','What usually goes wrong'],rows:[
+      ['1','Fill the board with no winner','No draw detection — the game just sits there'],
+      ['2','Click a cell that already has an X','It gets overwritten, or the turn flips anyway'],
+      ['3','Win, then keep clicking empty cells','Play continues after somebody already won'],
+      ['4','Win, then press Reset, then play again','Stale state: the status line or turn is wrong'],
+      ['5','Win on the anti-diagonal (top-right to bottom-left)','That line is missing from the win list'],
+      ['6','Press Tab, then Enter on a cell','Cells are `<div>` — not focusable, not activatable'],
+      ['7','Look at the status line during play','It never says whose turn it is, or never updates']
+    ]}},
+    {p:'Rows 1, 3 and 6 are the most common. Row 6 is a direct violation of your `AGENTS.md`, which makes it the cheapest thing you can point at when you reject.'},
+    {code:{name:'read the diff, not the summary',body:'git diff HEAD~1        # what the generated commit actually did\ngit diff --stat        # how big is it really'}}
+  ],
+  exercise: {
+    intro: 'Work through the hunt list in the browser first, then use the agent to check your findings. Order matters — form your own view before asking for its opinion.',
+    steps: [
+      { t:'Run the seven tests yourself', body:[
+        {p:'Open `index.html` and work down the table above, writing down what actually happens for each. Do not read the code yet.'},
+        {note:{kind:'tip',title:'This is the whole skill',body:'Ninety seconds of deliberate testing finds more than fifteen minutes of reading code for plausibility. Plausible and correct are different properties.'}}
+      ]},
+      { t:'Now read the code for the two worst findings', body:[
+        {p:'Only now open the file. For each defect you found, locate the line responsible. If you cannot find it, that itself is a finding — code you cannot follow is code you cannot own.'},
+        {code:{name:'terminal',body:'git diff HEAD~1'}}
+      ]},
+      { t:'Ask for omissions against your rules', body:[
+        {p:'Paste your seven rules back in and make it check them one by one:'},
+        {code:{name:'opencode prompt',body:'Check index.html against these rules, one by one. For each,\nsay PASS or FAIL and cite the line.\n\n  1. 3x3 board of <button> cells\n  2. X goes first, players alternate\n  3. wins by row, column and BOTH diagonals are detected\n  4. a full board with no winner is announced as a draw\n  5. clicking an occupied cell does nothing\n  6. play stops once the game is over\n  7. Reset starts a completely clean game\n\nDo not fix anything. Just report.'}},
+        {p:'Compare its list against yours. Where it disagrees with what you saw in the browser, **the browser wins** — verify before you believe.'}
+      ]},
+      { t:'Reject specifically', body:[
+        {p:'Name the rule, the symptom and the line. A vague rejection produces a vague retry:'},
+        {code:{name:'opencode prompt',body:'Two failures to fix, nothing else:\n\n1. Rule 4: filling the board with no winner leaves the status\n   line unchanged. It must announce a draw.\n2. Rule 6: after X wins I can still click empty cells and the\n   board updates. Play must stop when the game is over.\n\nChange only those two behaviours. Do not restructure anything.'}}
+      ]},
+      { t:'Re-test, then commit the fixes separately', body:[
+        {p:'A fix is a change, and changes get reviewed. Re-run the two tests that failed, plus one that passed before — fixes often break neighbours.'},
+        {code:{name:'terminal',body:'git diff\ngit add index.html\ngit commit -m "Announce draws and stop play after a win"'}}
+      ]}
+    ]
+  },
+  expected: 'A written list of what each of the seven tests actually did, at least two genuine defects found and fixed, and a separate commit containing only those fixes.',
+  validation: [
+    'You tested in the browser before reading any code',
+    'You found at least two real defects',
+    'You located the line responsible for at least one of them',
+    'Your rejection named the rule, the symptom and the line',
+    'You re-tested after the fix, including something that passed before',
+    'The fixes are a separate commit from the generated baseline'
+  ],
+  watchOut: {kind:'danger', title:'Do not ask "is this correct?"', body:'It will say yes. Asking an agent to grade its own work in the same session gets you a defence of the position it already took — that is why this module makes it check against your explicit rules instead, and why the browser overrules it.'},
+  checkpoint: [
+    { q:'Why can a diff never show you a missing draw check?',
+      options:['Diffs hide whitespace','A diff records what changed, never what was never written','The file is too long','Generated code has no comments'],
+      answer:1,
+      explain:'Additions and deletions are all a diff can contain, so an omission leaves no trace in it. That is why review needs an explicit list of required behaviours rather than just careful reading.' },
+    { q:'The agent reports rule 6 as PASS, but in the browser you can still click after winning. Who is right?',
+      options:['The agent — it read the code','The browser — it is running the actual behaviour','Whichever the tests agree with','Impossible to tell'],
+      answer:1,
+      explain:'The running program is the evidence; a code-reading report is a claim about it. Whenever the two disagree, verify by hand and trust what actually happens.' }
+  ]
+},
+
+{
+  id: 6,
+  title: 'Validate the Edges',
+  short: 'Validate',
+  minutes: 9,
+  why: 'Module 5 checked the rules you wrote. Validation asks the harder question: what about the inputs nobody wrote a rule for? A double-click, a rapid reset mid-game, a keyboard-only player. Generated code clusters tightly around the happy path, and the gaps are predictable enough to be a checklist.',
+  objective: 'Test the edges the rules never mentioned, and fix or record what breaks.',
+  concept: [
+    {p:'Everyone stops at "it works". The rungs above that are where the defects actually live.'},
+    {table:{head:['Rung','For this game'],rows:[
+      ['**1. It runs**','Opens from `file://`, no console errors'],
+      ['**2. Rules pass**','The seven from Module 5'],
+      ['**3. Edge cases**','Double-click, keyboard, reset timing, rapid clicks'],
+      ['**4. Accessibility**','Tab reaches every cell; Enter and Space activate'],
+      ['**5. Regression**','Did fixing the draw case break the win case?']
+    ]}},
+    {note:{kind:'warn',title:'Rung 5 is the one that bites',body:'Fixes to "stop play after a win" very often break Reset, because both touch the same "is the game over" flag. After every fix, re-test something that already worked.'}},
+    {p:'Accessibility is not a nice-to-have here — your `AGENTS.md` made it a hard constraint, which means it is part of the definition of done, not an enhancement.'},
+    {code:{name:'edge cases prompt — tests only',body:'List every way a user could break this game that my seven rules\ndo not cover. Include double-clicks, keyboard-only use, resetting\nmid-game, and clicking during the win announcement.\n\nFor each, say what SHOULD happen. Do not change index.html yet.'}},
+    {note:{kind:'best',title:'Why "do not change it yet"',body:'Left unconstrained, an agent treats a failing case as a problem to eliminate and will quietly edit the code until nothing fails. That turns validation into a rubber stamp.'}}
+  ],
+  exercise: {
+    intro: 'Six tests, about a minute each. Two of them will probably fail.',
+    steps: [
+      { t:'Run the edge tests by hand', body:[
+        {list:[
+          'Double-click one cell fast — does the turn flip twice?',
+          'Press Tab repeatedly — does focus reach every cell, and is it visible?',
+          'With a cell focused, press Enter, then Space — do both place a mark?',
+          'Press Reset in the middle of a game — is the turn back to X?',
+          'Win, then press Reset, then win again — does it still announce correctly?',
+          'Open the console (F12) and play a full game — any errors?'
+        ]},
+        {p:'Write down which failed. The focus-visibility and Space-key tests fail most often.'}
+      ]},
+      { t:'Ask for the cases you did not think of', body:[
+        {code:{name:'opencode prompt',body:'List every way a user could break this game that my seven rules\ndo not cover. Include double-clicks, keyboard-only use, resetting\nmid-game, and clicking during a win announcement.\n\nFor each, say what SHOULD happen. Do not change index.html yet.'}}
+      ]},
+      { t:'Fix only what genuinely fails', body:[
+        {p:'Not everything it lists is worth fixing in a sixty-minute lab. Pick the ones that break your stated constraints — accessibility failures qualify because `AGENTS.md` requires them.'},
+        {code:{name:'opencode prompt',body:'Fix only these:\n  - focus is not visible when tabbing to a cell\n  - Space does not activate a cell, only Enter\n\nDo not change anything else. Show me the diff.'}}
+      ]},
+      { t:'Regression check', body:[
+        {p:'Re-run the two rules you fixed in Module 5 — the draw case and stopping after a win. If either broke, that is the lesson, not an inconvenience.'}
+      ]},
+      { t:'Record what you chose not to fix', body:[
+        {p:'An accepted defect that is written down is a decision. An accepted defect nobody wrote down is a trap for the next person:'},
+        {code:{name:'KNOWN-ISSUES.md',body:'# Known issues\n\n## Double-click places two marks — OPEN\nA fast double-click on an empty cell can register twice.\nImpact: low, single-player-per-device use.\nFix: ignore clicks while the board is updating.\n\n## No win-line highlight — OPEN, by choice\nCosmetic. Out of scope for this session.'}},
+        {code:{name:'terminal',body:'git add -A\ngit commit -m "Fix keyboard activation and focus visibility"'}}
+      ]}
+    ]
+  },
+  expected: 'Six edge tests run by hand, the accessibility failures fixed, a regression check on the Module 5 fixes, and a `KNOWN-ISSUES.md` recording what you deliberately left.',
+  validation: [
+    'You ran all six edge tests and wrote down the results',
+    'Tab reaches every cell with visible focus',
+    'Both Enter and Space activate a cell',
+    'The Module 5 fixes still work after these changes',
+    'The browser console is clean through a full game',
+    '`KNOWN-ISSUES.md` records what you chose not to fix, with a reason'
+  ],
+  watchOut: {kind:'warn', title:'A failing test is a finding, not an obstacle', body:'Deleting or weakening a check to make it pass discards the only thing the exercise produced. Fix it, or write it down as accepted — never make it quietly disappear.'},
+  checkpoint: [
+    { q:'Why tell the agent "do not change index.html yet" when asking for edge cases?',
+      options:['To save time','Otherwise it will edit the code until nothing fails, which is not validation','Tests run faster','It avoids merge conflicts'],
+      answer:1,
+      explain:'An unconstrained agent treats a failing case as a problem to eliminate. Separating "find the problems" from "fix the problems" is what keeps the exercise honest.' },
+    { q:'After fixing "stop play after a win", what must you re-test?',
+      options:['Only the win case','Something that already worked, such as Reset','Nothing — the fix was small','The whole file by reading it'],
+      answer:1,
+      explain:'Both behaviours touch the same game-over state, so a fix to one commonly breaks the other. Re-testing something that previously passed is the cheapest regression check there is.' }
+  ]
+},
+
+{
+  id: 7,
+  title: 'Skills and Best Practices',
+  short: 'Skills & Practices',
+  minutes: 7,
+  why: 'You have just done something three times: checked generated code against an explicit list of rules. The third repetition is the signal — that procedure should stop living in your head and become part of the project. That is what a Skill is. Then, the nine habits that make all of this hold together when the deadline arrives.',
+  objective: 'Write one reusable Skill from the review procedure you just performed, and leave with the practices that make it stick.',
+  concept: [
+    {p:'A **Skill** is a reusable chunk of instructions the agent loads **only when it decides the task calls for it**. Unlike `AGENTS.md`, which is always in context, a Skill sits idle until it is needed — so you can keep a dozen without bloating every session.'},
+    {table:{head:['Tier','Home','Loaded'],rows:[
+      ['**Always**','`AGENTS.md`','Every session'],
+      ['**On demand**','`.opencode/skills/<name>/SKILL.md`','When the agent recognises the trigger']
+    ]}},
+    {p:'Each skill is a **directory** whose name matches the `name` in its frontmatter, containing a file called `SKILL.md` — in capitals.'},
+    {note:{kind:'danger',title:'Two silent failures',body:'`skill.md` in lowercase is never discovered. A directory name that does not exactly match the frontmatter `name` is ignored. Neither produces a warning — the skill simply never appears.'}},
+    {p:'At discovery the agent sees **only the `name` and `description`**. That makes the description the highest-leverage line in the whole file: say what it does *and* when to use it, naming the trigger explicitly. A vague description is the reason skills fail to activate — almost never the body.'},
+    {code:{name:'where they live',body:'.opencode/skills/<name>/SKILL.md        project — committed\n~/.config/opencode/skills/<name>/SKILL.md   personal — yours'}},
+    {p:'And the nine practices this hour has been teaching, stated plainly:'},
+    {table:{head:['Practice','What it prevents','How it fails quietly'],rows:[
+      ['**1. Small iterations**','Unreviewable changes','"It is all one feature, really"'],
+      ['**2. Always review**','Unowned code shipping','Reading the summary instead of the result'],
+      ['**3. Never trust blindly**','Confident wrong output','"It works, so it is right"'],
+      ['**4. Keep docs updated**','Context that teaches fiction','"I will write it up after"'],
+      ['**5. Keep `AGENTS.md` updated**','Repeating yourself forever','Correcting in chat, not in the file'],
+      ['**6. Reuse Skills**','Reinventing a procedure','Written once, never refined'],
+      ['**7. Use Git often**','Irreversible work','A dirty tree and one huge commit'],
+      ['**8. Think before coding**','Building the wrong thing well','"Sounds good, go ahead"'],
+      ['**9. Validate everything**','Shipping self-consistent errors','Stopping at "it works"']
+    ]}},
+    {note:{kind:'best',title:'The one that is never negotiable',body:'If you cannot explain a line, it does not ship. Every other practice can flex under a real deadline. That one cannot — it is what makes the code yours rather than the tool\'s, and "the AI wrote it" is not an answer an incident review accepts.'}}
+  ],
+  exercise: {
+    intro: 'Package the review procedure as a Skill, update your standing orders, and finish clean.',
+    steps: [
+      { t:'Create the skill', body:[
+        {code:{name:'terminal',body:'mkdir -p .opencode/skills/review-game'}},
+        {code:{name:'.opencode/skills/review-game/SKILL.md',body:'---\nname: review-game\ndescription: Review this HTML game against its stated rules and\n  the browser-testable edge cases. Use whenever asked to review,\n  check or validate index.html, or before any commit.\ncompatibility: opencode\n---\n\n## What I do\nCheck the game against its rules and report failures. I do not\nfix anything unless asked.\n\n## Steps\n1. Check AGENTS.md constraints first: one file, no dependencies,\n   <button> cells, no inline onclick. Report any violation.\n2. Check each game rule and cite the line: X first and\n   alternating, wins on rows, columns and BOTH diagonals, draw\n   on a full board, occupied cells ignored, play stops when the\n   game is over, Reset starts clean.\n3. Check the edges: double-click, Tab reaches every cell, Enter\n   AND Space activate, reset mid-game, clicking after a win.\n4. Report anything I could not locate in the code.\n\n## Output\nA numbered list, worst first. For each: the rule, the symptom,\nand the file line. PASS or FAIL per rule, nothing vaguer.\n\n## Rules\n- Do not modify index.html while reviewing.\n- A failing case is a finding to report, never a test to weaken.\n\n## When to use me\nAny request to review, check or validate the game, and before\nevery commit.'}},
+        {note:{kind:'tip',title:'Read that description again',body:'"Use whenever asked to review, check or validate index.html, or before any commit" names the trigger three ways. That is why it will actually activate.'}}
+      ]},
+      { t:'Restart and verify it loads', body:[
+        {p:'Skills are scanned at startup, so restart OpenCode, then confirm it resolves:'},
+        {code:{name:'opencode TUI',body:'skill({ name: "review-game" })'}},
+        {p:'Not found? Check in this order: `SKILL.md` in capitals, both `name` and `description` present, directory name matching `name` exactly, then restart.'}
+      ]},
+      { t:'Prove it activates without being named', body:[
+        {p:'New session. Ask for a review without mentioning the skill:'},
+        {code:{name:'opencode prompt',body:'Review the game before I commit.'}},
+        {p:'If it reports PASS/FAIL per rule with line citations, the skill activated. If it gives a generic code review instead, sharpen the description — not the body.'}
+      ]},
+      { t:'Update AGENTS.md with what you learned', body:[
+        {p:'Practice 5, applied immediately. An hour of working on this project taught you things your standing orders do not say yet:'},
+        {code:{name:'AGENTS.md (append)',body:'## Process\n- Plan before generating. No code until the plan is approved.\n- Test in the browser before reading the code.\n- Use the review-game skill before every commit.\n- One fix, one commit.\n\n## Known issues\nSee KNOWN-ISSUES.md. Do not "fix" anything listed there as\nby choice without asking.'}}
+      ]},
+      { t:'Finish clean', body:[
+        {code:{name:'terminal',body:'git add -A\ngit commit -m "Add review-game skill and update AGENTS.md"\ngit log --oneline'}},
+        {p:'You should see four or five small, single-purpose commits — a baseline, the review fixes, the edge fixes, and this one. That history is the evidence the work was supervised.'}
+      ]}
+    ]
+  },
+  expected: 'A committed `review-game` skill that activates without being named, an `AGENTS.md` updated with what the hour taught you, and a git history of small single-purpose commits.',
+  validation: [
+    'The file is `SKILL.md` in capitals, in a directory matching its `name`',
+    'The description names when to use it, not just what it does',
+    '`skill({ name: "review-game" })` resolves after restarting',
+    'It activated on "review the game before I commit" without being named',
+    '`AGENTS.md` now describes the process you actually used',
+    '`git log --oneline` shows four or more small, single-purpose commits'
+  ],
+  watchOut: {kind:'warn', title:'Do not write skills speculatively', body:'Write one when you have performed the same procedure about three times, as you just did. Skills written for hypothetical future needs go stale and clutter discovery with weak descriptions.'},
+  checkpoint: [
+    { q:'What does the agent see about a skill before deciding to load it?',
+      options:['The whole `SKILL.md`','Only its `name` and `description`','The directory contents','Nothing until told'],
+      answer:1,
+      explain:'That is why the description is the highest-leverage line in the file, and why a skill that never activates almost always has a description problem rather than a body problem.' },
+    { q:'Which practice is never negotiable, even under a deadline?',
+      options:['Updating documentation','If you cannot explain a line, it does not ship','Writing a plan first','Small commits'],
+      answer:1,
+      explain:'Everything else can flex temporarily and be repaid later. That one cannot, because it is what keeps the code owned by a human who can defend it — the basis of accountability for AI-assisted work.' }
+  ]
+}
+];
+
+/* ------------------------------------------------------------
+   QUIZ BANK — expanded to ~25 in the next pass.
+   {q, options[4], answer, explain, topic}
+   ------------------------------------------------------------ */
+const QUIZ_BANK = [
+  { topic:'AGENTS.md', q:'Which filename does OpenCode load automatically at the project root?', options:['`AGENT.md`','`AGENTS.md`','`README.md`','`.opencode/rules.md`'], answer:1, explain:'Plural. The singular looks correct and is never loaded, so every rule in it is silently ignored — the most common setup mistake there is.' },
+  { topic:'AGENTS.md', q:'A technical constraint true for every task in the repo belongs in:', options:['Every prompt','`AGENTS.md`','A code comment','The commit message'], answer:1, explain:'`AGENTS.md` loads every session, so a standing rule written there applies automatically to every task without you repeating it.' },
+  { topic:'Prompting', q:'What distinguishes a task from a prompt?', options:['Length','It has a goal, constraints, context and a way to check it','It names a file','It is polite'], answer:1, explain:'Prompts produce demos; tasks produce software. Those four parts are what make the result checkable rather than merely plausible.' },
+  { topic:'Prompting', q:'Which part of a task is most often omitted?', options:['The goal','How you will check the result','The language','The output filename'], answer:1, explain:'Goal and constraints feel obligatory; the check does not. Yet the check is exactly the list you review the result against later.' },
+  { topic:'Planning', q:'Why review a plan rather than the finished code?', options:['Plans are more accurate','A plan costs seconds to reject; the same error as code costs the session','Code is unreadable','It is faster to generate'], answer:1, explain:'The asymmetry is the argument: a false assumption caught in a sentence never becomes two hundred lines built on top of it.' },
+  { topic:'Planning', q:'A plan for a one-file game proposes adding `style.css`. This is:', options:['Good practice','Scope creep contradicting your stated constraint','Required by browsers','A naming issue'], answer:1, explain:'New structure appears in plans quietly. Reading for nouns you did not introduce is what catches it, and it is far cheaper to delete from a plan than from a repository.' },
+  { topic:'Review', q:'The agent\'s summary of what it built is:', options:['Proof it works','A claim from the same process that wrote the code','A test result','A changelog'], answer:1, explain:'If the task was misunderstood, the summary describes that misunderstanding accurately. The running program and the diff are the evidence.' },
+  { topic:'Review', q:'Which question best surfaces omissions?', options:['"Is this correct?"','"What did you NOT do that the plan mentioned?"','"Any bugs?"','"Explain this"'], answer:1, explain:'Additions are visible in code; absences leave no trace. Asking directly about the gap between plan and result is the cheap way to find a dropped rule.' },
+  { topic:'Git', q:'Why commit generated code before reviewing it?', options:['To back it up','So every later fix shows as a clean diff against a known baseline','Git requires it','To timestamp the work'], answer:1, explain:'Diff-driven review depends on an honest diff. Committing the raw output separates what the agent produced from what you changed afterwards.' },
+  { topic:'Best Practices', q:'You have corrected the agent about the same constraint three times. You should:', options:['Say it more firmly','Add or sharpen the rule in `AGENTS.md`','Switch models','Put it in every prompt'], answer:1, explain:'A repeated correction is a defect in your standing orders. Fixing the chat fixes one task; fixing the file fixes every future task.' },
+
+  { topic:'AGENTS.md', q:'Why should `AGENTS.md` stay short?', options:['Long files are hard to read','It loads every session, so every line costs on every task','OpenCode truncates it','Git prefers small files'], answer:1, explain:'It is always in context, so its cost is paid even on tasks it has nothing to do with. Detail needed only occasionally belongs in a Skill or a referenced document.' },
+  { topic:'AGENTS.md', q:'Which line is enforceable rather than decorative?', options:['"Write clean code"','"Board cells must be `<button>`, never `<div>`"','"Follow best practices"','"Make it maintainable"'], answer:1, explain:'A specific prohibition can be checked in ten seconds and either passes or fails. Vague guidance cannot be violated, which means it also cannot be followed.' },
+  { topic:'Context', q:'What happens to constraints you leave unstated?', options:['They are inferred correctly','The agent invents them, usually in whatever way makes its job easiest','They are requested','They default to safe values'], answer:1, explain:'Unstated constraints get filled in from what is most common generally — which for a browser game means a framework and a build step, exactly what you did not want.' },
+  { topic:'Context', q:'When should you start a new session?', options:['Every few messages','When the task changes','Only when it errors','Never during a project'], answer:1, explain:'A session is a unit of context, not a window you leave open. Debris from an earlier, unrelated task still reads as relevant and degrades what comes next.' },
+  { topic:'Prompting', q:'What does adding "ask instead of guessing" achieve?', options:['Shorter answers','Ambiguity surfaces instead of being resolved silently','Lower cost','Faster generation'], answer:1, explain:'Without it, every ambiguous point is decided for you invisibly, and you never learn that a decision was made at all — let alone which way it went.' },
+  { topic:'Planning', q:'Which of these is scope creep on a two-player tic-tac-toe task?', options:['A status line','A Reset button','An AI opponent','Win detection'], answer:2, explain:'It is unrequested work that expands the deliverable and the review burden. The other three were all in the stated rules.' },
+  { topic:'Planning', q:'When is skipping the plan correct?', options:['Never','When you can already picture the exact result','When you are short of time','On small teams'], answer:1, explain:'Plan-first is a tool, not a ritual. Demanding a plan for a one-line change is ceremony, and teams that plan everything stop genuinely reading plans.' },
+  { topic:'Review', q:'Why is generated code harder to review than human code?', options:['It is longer','It carries no signal of uncertainty — it looks equally confident when wrong','It has odd syntax','It lacks comments'], answer:1, explain:'A human writes awkward code where they were unsure, which gives a reviewer a hint. An agent produces the same polished output whether or not it understood the task.' },
+  { topic:'Review', q:'You find a defect. The best rejection is:', options:['"This is wrong, try again"','Name the rule, the symptom and the line','"Please be more careful"','Regenerate from scratch'], answer:1, explain:'Vague rejections produce vague retries. A specific one gives the agent something actionable instead of a mood to interpret.' },
+  { topic:'Review', q:'Testing the game in the browser before reading the code is better because:', options:['Reading is slow','It shows actual behaviour rather than plausible-looking code','Browsers catch syntax errors','It is more fun'], answer:1, explain:'Plausible and correct are different properties, and reading tends to confirm plausibility. Ninety seconds of deliberate testing beats fifteen minutes of reading.' },
+  { topic:'Validation', q:'Which edge case do generated games most often miss?', options:['X going first','A full board with no winner','Rendering the grid','Alternating turns'], answer:1, explain:'Generated code clusters around the happy path and the obvious win. The draw case requires noticing that the board can fill with no winner at all.' },
+  { topic:'Validation', q:'A generated test or check fails. You should:', options:['Delete it','Fix the defect, or record it as an accepted issue','Weaken the assertion','Ignore it if the feature works'], answer:1, explain:'A failing check is exactly what the exercise was for. Deleting or weakening it discards the finding and leaves the defect in place, unrecorded.' },
+  { topic:'Validation', q:'After fixing "stop play after a win", what should you re-test?', options:['Only that behaviour','Something that already worked, like Reset','Nothing','The whole file by reading'], answer:1, explain:'Both behaviours touch the same game-over state, so fixing one commonly breaks the other. Re-testing a previously passing case is the cheapest regression check available.' },
+  { topic:'Validation', q:'Keyboard access was a hard constraint in `AGENTS.md`. That makes it:', options:['A nice-to-have','Part of the definition of done','A stretch goal','A separate task'], answer:1, explain:'Once it is a stated constraint it is not an enhancement — a build that fails it is not finished, regardless of how well the mouse path works.' },
+  { topic:'Git', q:'Why start from a clean working tree?', options:['Git requires it','So the resulting diff contains only the agent\'s changes','It is faster','To avoid conflicts'], answer:1, explain:'Every review technique here reads a diff. Pre-existing uncommitted edits mix into it, so you attribute your own changes to the agent or miss its changes among yours.' },
+  { topic:'Git', q:'How many commits should this hour produce?', options:['One at the end','Several small single-purpose ones','One per file','None until it is finished'], answer:1, explain:'A baseline, the review fixes, the edge fixes, the skill. Small single-purpose commits keep each change reviewable and revertible on its own.' },
+  { topic:'Skills', q:'Where must a project skill live?', options:['`.opencode/skills/<name>/SKILL.md`','`.opencode/SKILL.md`','`skills/<name>.md`','Inside `AGENTS.md`'], answer:0, explain:'Each skill is a directory whose name matches the frontmatter `name`, containing an ALL-CAPS `SKILL.md`. Lowercase `skill.md` is never discovered.' },
+  { topic:'Skills', q:'Your skill exists but never activates. The most likely cause is:', options:['The model is too small','The description is too vague','The body is too long','Too many skills'], answer:1, explain:'Discovery shows only the name and description, so that line is the entire basis for activation. Naming the trigger explicitly usually fixes it.' },
+  { topic:'Skills', q:'When should you write a skill?', options:['At project start','After performing the same procedure about three times','For every task','Only for deployment'], answer:1, explain:'Repetition you have actually experienced is the signal. Speculative skills go stale and clutter discovery with weak descriptions.' },
+  { topic:'Skills', q:'What is the difference between `AGENTS.md` and a Skill?', options:['None, they are aliases','`AGENTS.md` always loads; a Skill loads on demand','Skills are older','`AGENTS.md` is optional'], answer:1, explain:'Always-loaded rules are paid for on every task; a Skill costs about one line until the agent recognises its trigger, which is what makes keeping many of them affordable.' },
+  { topic:'Best Practices', q:'Which practice is never negotiable under deadline?', options:['Updating docs','If you cannot explain a line, it does not ship','Planning first','Small commits'], answer:1, explain:'Everything else can flex and be repaid. That one cannot, because it is what keeps the code owned by a human who can defend it in an incident review.' },
+  { topic:'Best Practices', q:'What does an accepted defect need in order to be a decision rather than a trap?', options:['A fix scheduled','To be written down with its impact','A test','Nothing'], answer:1, explain:'An undocumented defect looks deliberate to the next reader and unintentional to the next agent. Recording it with its impact is what makes leaving it a choice.' },
+  { topic:'Best Practices', q:'Who is accountable for generated code that causes a problem?', options:['The tool vendor','The developer who reviewed and merged it','The model provider','Nobody in particular'], answer:1, explain:'Ownership does not transfer to a tool. That is precisely why explicability is a merge requirement rather than an aspiration.' },
+  { topic:'Best Practices', q:'"It works" is which rung of validation?', options:['The last one','An early one, with several above it','Not a rung','The only one that matters'], answer:1, explain:'Above it sit edge cases, accessibility and regression. Stopping at "it works" is the normal failure, and it is where most remaining defects live.' },
+  { topic:'Prompting', q:'Why write the checkable rules into the task rather than assuming them?', options:['It is more polite','They become the list you review the result against','It speeds generation','It reduces cost'], answer:1, explain:'Anything left off that list is something you have quietly decided not to care about — and there is a good chance you will not get it.' }
+];
+
+const POINTS = { step: 4, module: 20, checkpoint: 8, finalPerCorrect: 4 };
+const FINAL_COUNT = 10;
+const PASS_MARK = 70;
+
+/* ============================================================
+   2. STORE — one localStorage key.
+   NOTE: deliberately NOT 'opencode-lab-v1'. The full lab uses
+   that key; sharing it would let either lab wipe the other's
+   progress.
+   ============================================================ */
+const Store = {
+  KEY: 'opencode-express-v1',
+  subs: [],
+  state: null,
+
+  blank() {
+    return {
+      v: 1,
+      theme: null,        // null = follow system
+      done: {},           // moduleId -> true
+      checks: {},         // "modId:stepIdx" -> true
+      checkpoints: {},    // moduleId -> {correct, total}
+      quiz: { best: 0, taken: 0, last: null }
+    };
+  },
+
+  load() {
+    try {
+      const raw = localStorage.getItem(this.KEY);
+      this.state = raw ? Object.assign(this.blank(), JSON.parse(raw)) : this.blank();
+    } catch (e) {
+      this.state = this.blank();
+    }
+    return this.state;
+  },
+
+  save() {
+    try { localStorage.setItem(this.KEY, JSON.stringify(this.state)); } catch (e) { /* private mode */ }
+    this.subs.forEach(fn => fn(this.state));
+  },
+
+  subscribe(fn) { this.subs.push(fn); },
+  update(fn) { fn(this.state); this.save(); },
+  reset() { this.state = this.blank(); this.save(); }
+};
+
+/* ============================================================
+   3. SCORER — pure over state
+   ============================================================ */
+const Scorer = {
+  totalSteps() { return MODULES.reduce((n, m) => n + m.exercise.steps.length, 0); },
+  totalCheckpoints() { return MODULES.reduce((n, m) => n + m.checkpoint.length, 0); },
+  totalMinutes() { return MODULES.reduce((n, m) => n + m.minutes, 0); },
+
+  maxScore() {
+    return this.totalSteps() * POINTS.step
+         + MODULES.length * POINTS.module
+         + this.totalCheckpoints() * POINTS.checkpoint
+         + FINAL_COUNT * POINTS.finalPerCorrect;
+  },
+
+  score(s) {
+    let n = Object.keys(s.checks).length * POINTS.step;
+    n += Object.keys(s.done).length * POINTS.module;
+    Object.keys(s.checkpoints).forEach(k => { n += s.checkpoints[k].correct * POINTS.checkpoint; });
+    n += Math.round(s.quiz.best / 100 * FINAL_COUNT) * POINTS.finalPerCorrect;
+    return n;
+  },
+
+  modulesDone(s) { return MODULES.filter(m => s.done[m.id]).length; },
+  percent(s) { return MODULES.length ? Math.round(this.modulesDone(s) / MODULES.length * 100) : 0; },
+  minutesLeft(s) { return MODULES.filter(m => !s.done[m.id]).reduce((n, m) => n + m.minutes, 0); },
+  stepsDone(s) { return Object.keys(s.checks).length; },
+  complete(s) { return this.modulesDone(s) === MODULES.length; },
+
+  currentModule(s) {
+    return MODULES.find(m => !s.done[m.id]) || MODULES[MODULES.length - 1];
+  }
+};
+
+/* ============================================================
+   4. RENDER
+   ============================================================ */
+const esc = t => String(t)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;');
+
+const md = t => esc(t)
+  .replace(/`([^`]+)`/g, '<code>$1</code>')
+  .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+let codeSeq = 0;
+const codeStore = {};
+
+function codeBlock(name, body) {
+  const id = 'c' + (++codeSeq);
+  codeStore[id] = body;
+  return '<div class="code">'
+    + '<div class="code-head"><span class="code-name">' + esc(name) + '</span>'
+    + '<button class="copy" data-action="copy" data-code="' + id + '">Copy</button></div>'
+    + '<pre><code>' + esc(body) + '</code></pre></div>';
+}
+
+function blocks(list) {
+  if (!list) return '';
+  return list.map(b => {
+    if (b.p) return '<p>' + md(b.p) + '</p>';
+    if (b.list) return '<ul class="bullets">' + b.list.map(i => '<li>' + md(i) + '</li>').join('') + '</ul>';
+    if (b.code) return codeBlock(b.code.name, b.code.body);
+    if (b.table) return '<div class="table-wrap"><table><thead><tr>'
+      + b.table.head.map(h => '<th>' + md(h) + '</th>').join('')
+      + '</tr></thead><tbody>'
+      + b.table.rows.map(r => '<tr>' + r.map(c => '<td>' + md(c) + '</td>').join('') + '</tr>').join('')
+      + '</tbody></table></div>';
+    if (b.note) return '<div class="callout ' + b.note.kind + '"><div class="ct">' + esc(b.note.title) + '</div><p>' + md(b.note.body) + '</p></div>';
+    return '';
+  }).join('');
+}
+
+const Render = {
+
+  dashboard(s) {
+    const cur = Scorer.currentModule(s);
+    return ''
+      + '<section class="hero">'
+      +   '<h1>Build a Game. Learn the Workflow.</h1>'
+      +   '<p class="lead">Sixty minutes, one mission: build a tic-tac-toe game with OpenCode &mdash; and learn the habits that make AI a reliable teammate rather than a liability. You will write standing orders, turn a prompt into a task, reject a plan, review generated code, hunt real defects, and package what you learned as a reusable Skill.</p>'
+      +   '<div class="btn-row">'
+      +     '<button class="btn" data-action="go" data-route="module/' + cur.id + '">'
+      +       (Scorer.modulesDone(s) ? 'Continue: ' + esc(cur.short) : 'Start Module 1') + '</button>'
+      +     '<button class="btn ghost" data-action="go" data-route="quiz">Final quiz</button>'
+      +   '</div>'
+      + '</section>'
+
+      + '<div class="stats">'
+      +   this.stat(Scorer.percent(s) + '%', 'Progress', Scorer.modulesDone(s) + ' of ' + MODULES.length + ' modules')
+      +   this.stat(Scorer.minutesLeft(s) + ' min', 'Remaining', 'of ' + Scorer.totalMinutes() + ' total')
+      +   this.stat(Scorer.stepsDone(s) + '', 'Steps done', 'of ' + Scorer.totalSteps())
+      +   this.stat(Scorer.score(s) + '', 'Score', 'of ' + Scorer.maxScore())
+      + '</div>'
+
+      + '<section class="card"><div class="sec-label">The hour</div><div class="agenda">'
+      +   MODULES.map(m =>
+            '<button class="agenda-row' + (s.done[m.id] ? ' done' : '') + '" data-action="go" data-route="module/' + m.id + '">'
+            + '<span class="an">' + (s.done[m.id] ? '&#10003;' : m.id) + '</span>'
+            + '<span class="at">' + esc(m.short) + '</span>'
+            + '<span class="am">' + m.minutes + ' min</span></button>').join('')
+      + '</div></section>'
+
+      + '<section class="card"><div class="sec-label">Before you start</div>'
+      +   '<p>You need OpenCode installed and working, a terminal, and a browser. Nothing else &mdash; the mission builds one HTML file with no dependencies, so it works fully offline.</p>'
+      +   '<div class="btn-row"><button class="btn ghost" data-action="reset">Reset progress</button></div>'
+      + '</section>';
+  },
+
+  stat(v, l, h) {
+    return '<div class="stat"><div class="sv">' + esc(v) + '</div><div class="sl">' + esc(l) + '</div><div class="sh">' + esc(h) + '</div></div>';
+  },
+
+  module(m, s) {
+    const done = !!s.done[m.id];
+    const idx = MODULES.indexOf(m);
+    const prev = MODULES[idx - 1], next = MODULES[idx + 1];
+
+    let h = '<header class="module-head">'
+      + '<div class="crumb">Module ' + m.id + ' of ' + MODULES.length + '</div>'
+      + '<h1>' + esc(m.title) + '</h1>'
+      + '<div class="meta-row">'
+      +   '<span class="pill time">&#9201; ' + m.minutes + ' min</span>'
+      +   '<span class="pill">' + (m.exercise.steps.length * POINTS.step + POINTS.module + m.checkpoint.length * POINTS.checkpoint) + ' points</span>'
+      + '</div></header>';
+
+    h += '<section class="card"><div class="sec-label">Why this matters</div><p>' + md(m.why) + '</p></section>';
+    h += '<section class="card"><div class="sec-label">Objective</div><p>' + md(m.objective) + '</p></section>';
+    h += '<section class="card"><div class="sec-label">Concept</div>' + blocks(m.concept) + '</section>';
+
+    h += '<section class="card"><div class="sec-label">Hands-on</div>'
+       + '<p>' + md(m.exercise.intro) + '</p><div style="height:18px"></div>';
+    m.exercise.steps.forEach((st, i) => {
+      const key = m.id + ':' + i;
+      const on = !!s.checks[key];
+      h += '<div class="step"><div class="step-n">' + (i + 1) + '</div><div class="step-body">'
+         + '<div class="t">' + md(st.t) + '</div>' + blocks(st.body)
+         + '<button class="check' + (on ? ' on' : '') + '" data-action="check" data-key="' + key + '">'
+         + '<span class="box">&#10003;</span><span class="lbl">Step complete<em>+' + POINTS.step + ' points</em></span></button>'
+         + '</div></div>';
+    });
+    h += '</section>';
+
+    h += '<section class="card"><div class="sec-label">Expected outcome</div><p>' + md(m.expected) + '</p></section>';
+
+    h += '<section class="card"><div class="sec-label">Validation</div>'
+       + '<p>Confirm each of these before moving on.</p><div style="height:12px"></div>'
+       + m.validation.map(v => '<div class="callout info"><div class="ct">&#10003; ' + md(v) + '</div></div>').join('')
+       + '</section>';
+
+    if (m.watchOut) {
+      h += '<section class="card"><div class="sec-label">Watch out</div>'
+         + '<div class="callout ' + m.watchOut.kind + '"><div class="ct">' + esc(m.watchOut.title) + '</div>'
+         + '<p>' + md(m.watchOut.body) + '</p></div></section>';
+    }
+
+    h += '<section class="card"><div class="sec-label">Checkpoint</div>' + Quiz.renderCheckpoint(m, s) + '</section>';
+
+    h += '<div class="complete-card' + (done ? ' on' : '') + '">'
+       + '<div class="cc-txt"><b>' + (done ? 'Module complete' : 'Mark this module complete') + '</b>'
+       + '<span>' + (done ? 'Revisit it any time.' : 'Tick this once the validation criteria above actually pass.') + '</span></div>'
+       + '<button class="btn' + (done ? ' ghost' : '') + '" data-action="done" data-id="' + m.id + '">'
+       + (done ? 'Mark incomplete' : 'Complete &middot; +' + POINTS.module + ' points') + '</button></div>';
+
+    h += '<div class="pager">'
+       + (prev ? '<button class="btn ghost" data-action="go" data-route="module/' + prev.id + '">&larr; ' + esc(prev.short) + '</button>' : '<span></span>')
+       + (next ? '<button class="btn" data-action="go" data-route="module/' + next.id + '">' + esc(next.short) + ' &rarr;</button>'
+               : '<button class="btn" data-action="go" data-route="summary">Finish &rarr;</button>')
+       + '</div>';
+
+    return h;
+  },
+
+  quiz(s) {
+    return '<header class="module-head"><div class="crumb">Assessment</div>'
+      + '<h1>Final Quiz</h1>'
+      + '<div class="meta-row"><span class="pill">' + FINAL_COUNT + ' questions</span>'
+      + '<span class="pill">' + QUIZ_BANK.length + ' in the bank</span>'
+      + '<span class="pill time">Pass ' + PASS_MARK + '%</span>'
+      + (s.quiz.best ? '<span class="pill solved">Best ' + s.quiz.best + '%</span>' : '')
+      + '</div></header>'
+      + '<section class="card">' + Quiz.renderFinal(s) + '</section>';
+  },
+
+  /* ---------- completion summary ---------- */
+  summary(s) {
+    const done = Scorer.modulesDone(s), total = MODULES.length;
+    const complete = Scorer.complete(s);
+    const passed = s.quiz.best >= PASS_MARK;
+
+    let h = '<header class="module-head"><div class="crumb">Finish</div>'
+      + '<h1>' + (complete ? 'Hour complete' : 'Not finished yet') + '</h1></header>';
+
+    if (!complete) {
+      h += '<section class="card"><div class="sec-label">Outstanding</div>'
+        + '<p>The summary opens once every module is marked complete. ' + (total - done) + ' of ' + total + ' still to go.</p>'
+        + '<div class="agenda" style="margin-top:14px">'
+        + MODULES.filter(m => !s.done[m.id]).map(m =>
+            '<button class="agenda-row" data-action="go" data-route="module/' + m.id + '">'
+            + '<span class="an">' + m.id + '</span><span class="at">' + esc(m.short) + '</span>'
+            + '<span class="am">' + m.minutes + ' min</span></button>').join('')
+        + '</div>'
+        + '<div class="btn-row"><button class="btn" data-action="go" data-route="module/' + Scorer.currentModule(s).id + '">Continue</button></div>'
+        + '</section>';
+      return h;
+    }
+
+    h += '<div class="stats">'
+      +   this.stat('100%', 'Modules', total + ' of ' + total)
+      +   this.stat(Scorer.stepsDone(s) + '', 'Steps done', 'of ' + Scorer.totalSteps())
+      +   this.stat(s.quiz.taken ? s.quiz.best + '%' : '—', 'Final quiz', s.quiz.taken ? (passed ? 'passed' : 'below ' + PASS_MARK + '%') : 'not taken')
+      +   this.stat(Scorer.score(s) + '', 'Score', 'of ' + Scorer.maxScore())
+      + '</div>';
+
+    h += '<section class="card"><div class="sec-label">What you built</div>'
+      + '<p>A playable tic-tac-toe game in one self-contained HTML file &mdash; and, more importantly, a repository that shows how it was built:</p>'
+      + '<ul class="bullets">'
+      +   '<li>`AGENTS.md` written **before** any code, and updated after</li>'
+      +   '<li>A task with seven checkable rules, not a prompt</li>'
+      +   '<li>A plan you rejected once before approving</li>'
+      +   '<li>Defects you found by testing, not by reading</li>'
+      +   '<li>Edge cases and accessibility treated as part of done</li>'
+      +   '<li>A `review-game` skill that activates on its own</li>'
+      +   '<li>`KNOWN-ISSUES.md` recording what you left, and why</li>'
+      +   '<li>Several small, single-purpose commits</li>'
+      + '</ul></section>';
+
+    h += '<section class="card"><div class="sec-label">The habits, in one line each</div>'
+      + '<div class="table-wrap"><table><tbody>'
+      + [['Context first','State constraints before generating, in `AGENTS.md`.'],
+         ['Task, not prompt','Goal, constraints, and how you will check it.'],
+         ['Plan first','Thirty seconds to reject beats an hour to unpick.'],
+         ['Test, do not read','The running program is the evidence.'],
+         ['Find what is missing','A diff cannot show you an omission.'],
+         ['Validate the edges','"It works" is an early rung, not the last.'],
+         ['Reuse procedures','Third repetition means write a Skill.'],
+         ['Commit small','Each change reviewable and revertible alone.'],
+         ['Own every line','If you cannot explain it, it does not ship.']
+        ].map(r => '<tr><td style="width:190px"><strong>' + esc(r[0]) + '</strong></td><td>' + md(r[1]) + '</td></tr>').join('')
+      + '</tbody></table></div></section>';
+
+    h += '<section class="card"><div class="sec-label">Where next</div>'
+      + '<p>This hour used a toy so the workflow could be the subject. The same habits carry to a real service &mdash; but real services add project knowledge files, diff-driven review at scale, data migrations and enterprise guardrails.</p>'
+      + '<div class="callout best"><div class="ct">The full lab</div><p>`opencode-lab.html` is the 14-chapter version: one neglected FastAPI service improved end to end over roughly six hours, with a 64-question bank, downloadable templates and a certificate.</p></div>'
+      + (s.quiz.taken ? '' : '<div class="callout info"><div class="ct">One thing left</div><p>You have not taken the final quiz yet.</p></div>')
+      + '<div class="btn-row">'
+      + (passed ? '' : '<button class="btn" data-action="go" data-route="quiz">' + (s.quiz.taken ? 'Retake the quiz' : 'Take the final quiz') + '</button>')
+      + '<button class="btn ghost" data-action="reset">Reset and run it again</button>'
+      + '</div></section>';
+
+    return h;
+  },
+
+  notFound() {
+    return '<section class="card"><h2>Nothing here</h2><p>That route does not exist.</p>'
+      + '<div class="btn-row"><button class="btn" data-action="go" data-route="dashboard">Back to start</button></div></section>';
+  }
+};
+
+/* ============================================================
+   5. QUIZ — checkpoints stay open until correct;
+   the final allows one answer per question.
+   ============================================================ */
+const Quiz = {
+  cp: {},
+  final: null,
+
+  cpState(id) { return this.cp[id] || (this.cp[id] = { wrong: {}, solved: {}, firstTry: {} }); },
+  cpOpen(m) {
+    const st = this.cpState(m.id);
+    return m.checkpoint.filter((q, i) => !st.solved[i]).length;
+  },
+
+  renderCheckpoint(m, s) {
+    const st = this.cpState(m.id);
+    const saved = s.checkpoints[m.id];
+    const open = this.cpOpen(m);
+    const total = m.checkpoint.length;
+
+    let h = '<p>Both questions must be answered correctly. A wrong answer is flagged and stays open &mdash; only a <strong>first-attempt</strong> hit scores ' + POINTS.checkpoint + ' points.</p>';
+
+    h += '<div class="callout ' + (open ? 'warn' : 'tip') + '" style="margin-bottom:18px"><div class="ct">'
+       + (open ? '&#9873; ' + open + ' of ' + total + ' still to fix' : '&#10003; All ' + total + ' resolved')
+       + '</div></div>';
+
+    m.checkpoint.forEach((q, qi) => {
+      const wrong = st.wrong[qi] || [];
+      const solved = !!st.solved[qi];
+
+      h += '<div style="margin-bottom:24px">';
+      h += '<div class="quiz-q">' + (qi + 1) + '. ' + md(q.q)
+         + (solved ? ' <span class="pill solved">&#10003; solved</span>'
+                   : (wrong.length ? ' <span class="pill retry">&#9873; retry</span>' : ''))
+         + '</div>';
+
+      q.options.forEach((o, oi) => {
+        const isWrong = wrong.indexOf(oi) > -1;
+        let cls = 'opt';
+        if (solved && oi === q.answer) cls += ' right';
+        else if (isWrong) cls += ' wrong';
+        h += '<button class="' + cls + '" data-action="cp-answer" data-m="' + m.id + '" data-q="' + qi + '" data-o="' + oi + '"'
+           + (solved || isWrong ? ' disabled' : '') + '>'
+           + '<span class="k">' + 'ABCD'[oi] + '</span><span>' + md(o) + '</span></button>';
+      });
+
+      if (solved) {
+        h += '<div class="callout tip explain"><div class="ct">&#10003; Correct'
+           + (st.firstTry[qi] ? ' &mdash; first attempt, +' + POINTS.checkpoint + ' points' : ' &mdash; no points, ' + wrong.length + ' miss(es)')
+           + '</div><p>' + md(q.explain) + '</p></div>';
+      } else if (wrong.length) {
+        h += '<div class="callout danger explain"><div class="ct">&#9873; Not correct &mdash; try again</div>'
+           + '<p>That option is ruled out. The explanation appears once you get it right.</p></div>';
+      }
+      h += '</div>';
+    });
+
+    if (saved) {
+      h += '<div class="callout best"><div class="ct">Checkpoint recorded</div><p>'
+         + saved.correct + ' of ' + saved.total + ' on the first attempt &mdash; '
+         + (saved.correct * POINTS.checkpoint) + ' points banked.</p></div>';
+    }
+    return h;
+  },
+
+  answerCheckpoint(mId, qi, oi) {
+    const m = MODULES.find(x => x.id === mId);
+    const st = this.cpState(mId);
+    if (st.solved[qi] || (st.wrong[qi] || []).indexOf(oi) > -1) return;
+
+    if (oi === m.checkpoint[qi].answer) {
+      st.solved[qi] = true;
+      st.firstTry[qi] = !(st.wrong[qi] || []).length;
+    } else {
+      (st.wrong[qi] = st.wrong[qi] || []).push(oi);
+    }
+
+    if (this.cpOpen(m) === 0 && !Store.state.checkpoints[mId]) {
+      const correct = m.checkpoint.filter((q, i) => st.firstTry[i]).length;
+      Store.update(s => { s.checkpoints[mId] = { correct: correct, total: m.checkpoint.length }; });
+    } else {
+      Store.save();
+    }
+  },
+
+  draw(n) {
+    const pool = QUIZ_BANK.slice();
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+    }
+    return pool.slice(0, Math.min(n, pool.length));
+  },
+
+  start() { this.final = { qs: this.draw(FINAL_COUNT), i: 0, answers: [], chosen: undefined }; },
+
+  renderFinal(s) {
+    const f = this.final;
+
+    if (!f) {
+      return '<h2>Before you begin</h2>'
+        + '<p>' + FINAL_COUNT + ' questions drawn at random, one at a time, with an explanation after each answer. Pass mark is ' + PASS_MARK + '%. Retake as often as you like &mdash; a different set is drawn each time and your best score is kept.</p>'
+        + (s.quiz.taken ? '<div class="callout info"><div class="ct">Previous attempts</div><p>Taken ' + s.quiz.taken + ' time(s). Best ' + s.quiz.best + '%.</p></div>' : '')
+        + '<div class="btn-row"><button class="btn" data-action="quiz-start">Start</button></div>';
+    }
+
+    if (f.done) {
+      const correct = f.answers.filter(a => a).length;
+      const pct = Math.round(correct / f.qs.length * 100);
+      const pass = pct >= PASS_MARK;
+      return '<h2>' + (pass ? 'Passed' : 'Not passed yet') + '</h2>'
+        + '<div class="stats" style="margin:18px 0">'
+        +   Render.stat(pct + '%', 'Score', correct + ' of ' + f.qs.length)
+        +   Render.stat(s.quiz.best + '%', 'Best', 'over ' + s.quiz.taken + ' attempt(s)')
+        + '</div>'
+        + '<div class="callout ' + (pass ? 'tip' : 'warn') + '"><div class="ct">' + (pass ? 'Well done' : 'Pass mark is ' + PASS_MARK + '%') + '</div>'
+        + '<p>' + (pass ? 'You have a working command of the workflow. Everything here scales to real services — the full 14-chapter lab takes it further.' : 'Revisit the modules covering what you missed, then retake — a different set is drawn each time.') + '</p></div>'
+        + '<div class="btn-row"><button class="btn" data-action="quiz-start">Retake</button>'
+        + '<button class="btn ghost" data-action="go" data-route="dashboard">Back to start</button></div>';
+    }
+
+    const q = f.qs[f.i];
+    const chosen = f.chosen;
+    let h = '<div class="quiz-bar"><span class="bar"><i style="width:' + (f.i / f.qs.length * 100) + '%"></i></span>'
+          + '<span class="quiz-count">' + (f.i + 1) + ' / ' + f.qs.length + '</span></div>'
+          + '<div class="crumb">' + esc(q.topic) + '</div>'
+          + '<div class="quiz-q">' + md(q.q) + '</div>';
+
+    q.options.forEach((o, oi) => {
+      let cls = 'opt';
+      if (chosen !== undefined) {
+        if (oi === q.answer) cls += ' right';
+        else if (oi === chosen) cls += ' wrong';
+      }
+      h += '<button class="' + cls + '" data-action="q-answer" data-o="' + oi + '"'
+         + (chosen !== undefined ? ' disabled' : '') + '>'
+         + '<span class="k">' + 'ABCD'[oi] + '</span><span>' + md(o) + '</span></button>';
+    });
+
+    if (chosen !== undefined) {
+      h += '<div class="callout ' + (chosen === q.answer ? 'tip' : 'warn') + ' explain">'
+         + '<div class="ct">' + (chosen === q.answer ? '&#10003; Correct' : '&#10007; Incorrect') + '</div>'
+         + '<p>' + md(q.explain) + '</p></div>'
+         + '<div class="btn-row"><button class="btn" data-action="q-next">'
+         + (f.i === f.qs.length - 1 ? 'See results' : 'Next question') + '</button></div>';
+    }
+    return h;
+  },
+
+  answerFinal(oi) {
+    const f = this.final;
+    if (!f || f.chosen !== undefined) return;
+    f.chosen = oi;
+    f.answers.push(oi === f.qs[f.i].answer);
+  },
+
+  nextFinal() {
+    const f = this.final;
+    if (f.i === f.qs.length - 1) {
+      f.done = true;
+      const pct = Math.round(f.answers.filter(a => a).length / f.qs.length * 100);
+      Store.update(s => {
+        s.quiz.taken++;
+        s.quiz.last = pct;
+        if (pct > s.quiz.best) s.quiz.best = pct;
+      });
+    } else {
+      f.i++;
+      f.chosen = undefined;
+    }
+  }
+};
+
+/* ============================================================
+   6. ROUTER + BOOT
+   ============================================================ */
+const App = {
+  lastRoute: null,
+
+  route() { return (location.hash || '#/dashboard').replace(/^#\/?/, '') || 'dashboard'; },
+  go(r) { location.hash = '#/' + r; },
+
+  render() {
+    const s = Store.state;
+    const r = this.route();
+    const view = document.getElementById('view');
+    // Ticking a box re-renders in place — only a real navigation scrolls to top.
+    const moved = r !== this.lastRoute;
+    const y = window.scrollY || 0;
+    codeSeq = 0;
+
+    let html;
+    if (r === 'dashboard') html = Render.dashboard(s);
+    else if (r === 'quiz') html = Render.quiz(s);
+    else if (r === 'summary') html = Render.summary(s);
+    else if (r.indexOf('module/') === 0) {
+      const m = MODULES.find(x => x.id === parseInt(r.split('/')[1], 10));
+      html = m ? Render.module(m, s) : Render.notFound();
+    } else html = Render.notFound();
+
+    view.innerHTML = html;
+    this.lastRoute = r;
+    window.scrollTo(0, moved ? 0 : y);
+    this.renderNav();
+    this.renderStats();
+    if (moved) document.body.classList.remove('nav-open');
+  },
+
+  renderNav() {
+    const s = Store.state, r = this.route();
+    let h = '<div class="nav-items">'
+      + '<button class="nav-item' + (r === 'dashboard' ? ' active' : '') + '" data-action="go" data-route="dashboard">'
+      + '<span class="n">&#9638;</span><span class="t">Start here</span></button></div>'
+      + '<div class="nav-head">The hour</div><div class="nav-items">'
+      + MODULES.map(m => {
+          const active = r === 'module/' + m.id;
+          const done = !!s.done[m.id];
+          return '<button class="nav-item' + (active ? ' active' : '') + (done ? ' done' : '') + '" data-action="go" data-route="module/' + m.id + '">'
+            + '<span class="n">' + (done ? '&#10003;' : m.id) + '</span>'
+            + '<span class="t">' + esc(m.short) + '</span>'
+            + '<span class="mins">' + m.minutes + 'm</span></button>';
+        }).join('')
+      + '</div>'
+      + '<div class="nav-head">Finish</div><div class="nav-items">'
+      + '<button class="nav-item' + (r === 'quiz' ? ' active' : '') + '" data-action="go" data-route="quiz">'
+      + '<span class="n">&#9634;</span><span class="t">Final quiz</span></button>'
+      + '<button class="nav-item' + (r === 'summary' ? ' active' : '') + (Scorer.complete(s) ? ' done' : '') + '" data-action="go" data-route="summary">'
+      + '<span class="n">&#9873;</span><span class="t">Summary</span></button>'
+      + '</div>';
+    document.getElementById('nav').innerHTML = h;
+  },
+
+  renderStats() {
+    const s = Store.state;
+    document.getElementById('sidePct').textContent = Scorer.percent(s) + '%';
+    document.getElementById('sideBar').style.width = Scorer.percent(s) + '%';
+    document.getElementById('sideDone').textContent = Scorer.modulesDone(s);
+    document.getElementById('sideTotal').textContent = MODULES.length;
+    document.getElementById('sideLeft').textContent = Scorer.minutesLeft(s);
+    document.getElementById('topScore').textContent = Scorer.score(s);
+    document.getElementById('topTime').textContent = Scorer.minutesLeft(s) + ' min left';
+  },
+
+  applyTheme() {
+    const t = Store.state.theme
+      || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('themeBtn').innerHTML = t === 'dark' ? '&#9728;' : '&#9681;';
+  },
+
+  toggleTheme() {
+    const cur = document.documentElement.getAttribute('data-theme');
+    Store.update(s => { s.theme = cur === 'dark' ? 'light' : 'dark'; });
+    this.applyTheme();
+  },
+
+  /* copy — file:// is not always a secure context */
+  copy(btn) {
+    const text = codeStore[btn.dataset.code] || '';
+    const ok = () => {
+      btn.textContent = 'Copied';
+      btn.classList.add('ok');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('ok'); }, 1400);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(ok, () => this.copyFallback(text, ok));
+    } else {
+      this.copyFallback(text, ok);
+    }
+  },
+
+  copyFallback(text, ok) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); ok(); } catch (e) { /* unavailable */ }
+    document.body.removeChild(ta);
+  },
+
+  bind() {
+    document.addEventListener('click', e => {
+      const el = e.target.closest('[data-action]');
+      if (!el) return;
+      const a = el.dataset.action;
+
+      if (a === 'go') this.go(el.dataset.route);
+      else if (a === 'theme') this.toggleTheme();
+      else if (a === 'copy') this.copy(el);
+      else if (a === 'toggle-nav') document.body.classList.toggle('nav-open');
+      else if (a === 'close-nav') document.body.classList.remove('nav-open');
+      else if (a === 'check') {
+        const k = el.dataset.key;
+        Store.update(s => { if (s.checks[k]) delete s.checks[k]; else s.checks[k] = true; });
+        this.render();
+      }
+      else if (a === 'done') {
+        const id = parseInt(el.dataset.id, 10);
+        Store.update(s => { if (s.done[id]) delete s.done[id]; else s.done[id] = true; });
+        this.render();
+      }
+      else if (a === 'cp-answer') {
+        Quiz.answerCheckpoint(parseInt(el.dataset.m, 10), parseInt(el.dataset.q, 10), parseInt(el.dataset.o, 10));
+        this.render();
+      }
+      else if (a === 'quiz-start') { Quiz.start(); this.render(); }
+      else if (a === 'q-answer') { Quiz.answerFinal(parseInt(el.dataset.o, 10)); this.render(); }
+      else if (a === 'q-next') { Quiz.nextFinal(); this.render(); }
+      else if (a === 'reset') {
+        if (confirm('Reset all progress in the Express lab? The full lab is not affected.')) {
+          Store.reset(); Quiz.cp = {}; Quiz.final = null; this.applyTheme(); this.render();
+        }
+      }
+    });
+
+    window.addEventListener('hashchange', () => this.render());
+  },
+
+  boot() {
+    Store.load();
+    this.applyTheme();
+    this.bind();
+    this.render();
+  }
+};
+
+App.boot();
+</script>
+</body>
+</html>

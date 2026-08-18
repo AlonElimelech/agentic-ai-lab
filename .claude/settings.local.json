@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -nE \"^/\\\\* =|^  // ===|^// \" opencode-lab.html)",
+      "Bash(grep -oiE \"guess[- ]?the[- ]?number|snake|tic.tac.toe|hangman|game[a-z ]{0,20}\" opencode-lab-express.html)"
+    ]
+  }
+}
