@@ -1117,7 +1117,29 @@ const QUIZ_BANK = [
   { topic:'Prompting', q:'Why write the checkable rules into the task rather than assuming them?', options:['It is more polite','They become the list you review the result against','It speeds generation','It reduces cost'], answer:1, explain:'Anything left off that list is something you have quietly decided not to care about — and there is a good chance you will not get it.' }
 ];
 
-const POINTS = { step: 4, module: 20, checkpoint: 8, finalPerCorrect: 4 };
+/* Every question was authored with the correct option second, so the
+   options are permuted once at load — before any state exists. The
+   engine stores option indexes (disabled wrong answers, the final's
+   answers), and they all refer to this order. Reload reshuffles;
+   nothing persisted holds an index. */
+function shuffleOptions(q) {
+  const tagged = q.options.map((o, i) => ({ o: o, correct: i === q.answer }));
+  for (let i = tagged.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = tagged[i]; tagged[i] = tagged[j]; tagged[j] = t;
+  }
+  q.options = tagged.map(t => t.o);
+  q.answer = tagged.findIndex(t => t.correct);
+}
+
+MODULES.forEach(m => m.checkpoint.forEach(shuffleOptions));
+QUIZ_BANK.forEach(shuffleOptions);
+
+/* Weighted so the raw total is exactly 100 with the current content —
+   31 steps + 8 modules x 4 + 17 checkpoints + 10 final answers x 2.
+   Scorer.rawMax() still derives it, and the assertion lives in the
+   test: add content without retuning these and the sum drifts. */
+const POINTS = { step: 1, module: 4, checkpoint: 1, finalPerCorrect: 2 };
 const FINAL_COUNT = 10;
 const PASS_MARK = 90;
 
@@ -1278,6 +1300,9 @@ const Render = {
       + '</section>';
   },
 
+  // '1 point' / '4 points' — the weights are small enough that plurals matter now.
+  pts(n) { return n + ' point' + (n === 1 ? '' : 's'); },
+
   stat(v, l, h) {
     return '<div class="stat"><div class="sv">' + esc(v) + '</div><div class="sl">' + esc(l) + '</div><div class="sh">' + esc(h) + '</div></div>';
   },
@@ -1307,7 +1332,7 @@ const Render = {
       h += '<div class="step"><div class="step-n">' + (i + 1) + '</div><div class="step-body">'
          + '<div class="t">' + md(st.t) + '</div>' + blocks(st.body)
          + '<button class="check' + (on ? ' on' : '') + '" data-action="check" data-key="' + key + '">'
-         + '<span class="box">&#10003;</span><span class="lbl">Step complete<em>+' + POINTS.step + ' points</em></span></button>'
+         + '<span class="box">&#10003;</span><span class="lbl">Step complete<em>+' + this.pts(POINTS.step) + '</em></span></button>'
          + '</div></div>';
     });
     h += '</section>';
@@ -1331,7 +1356,7 @@ const Render = {
        + '<div class="cc-txt"><b>' + (done ? 'Module complete' : 'Mark this module complete') + '</b>'
        + '<span>' + (done ? 'Revisit it any time.' : 'Tick this once the validation criteria above actually pass.') + '</span></div>'
        + '<button class="btn' + (done ? ' ghost' : '') + '" data-action="done" data-id="' + m.id + '">'
-       + (done ? 'Mark incomplete' : 'Complete &middot; +' + POINTS.module + ' points') + '</button></div>';
+       + (done ? 'Mark incomplete' : 'Complete &middot; +' + this.pts(POINTS.module)) + '</button></div>';
 
     h += '<div class="pager">'
        + (prev ? '<button class="btn ghost" data-action="go" data-route="module/' + prev.id + '">&larr; ' + esc(prev.short) + '</button>' : '<span></span>')
@@ -1490,7 +1515,7 @@ const Quiz = {
     const open = this.cpOpen(m);
     const total = m.checkpoint.length;
 
-    let h = '<p>' + (total === 2 ? 'Both questions' : 'All ' + total + ' questions') + ' must be answered correctly. A wrong answer is flagged and stays open &mdash; only a <strong>first-attempt</strong> hit scores ' + POINTS.checkpoint + ' points.</p>';
+    let h = '<p>' + (total === 2 ? 'Both questions' : 'All ' + total + ' questions') + ' must be answered correctly. A wrong answer is flagged and stays open &mdash; only a <strong>first-attempt</strong> hit scores ' + Render.pts(POINTS.checkpoint) + '.</p>';
 
     h += '<div class="callout ' + (open ? 'warn' : 'tip') + '" style="margin-bottom:18px"><div class="ct">'
        + (open ? '&#9873; ' + open + ' of ' + total + ' still to fix' : '&#10003; All ' + total + ' resolved')
@@ -1518,7 +1543,7 @@ const Quiz = {
 
       if (solved) {
         h += '<div class="callout tip explain"><div class="ct">&#10003; Correct'
-           + (st.firstTry[qi] ? ' &mdash; first attempt, +' + POINTS.checkpoint + ' points' : ' &mdash; no points, ' + wrong.length + ' miss(es)')
+           + (st.firstTry[qi] ? ' &mdash; first attempt, +' + Render.pts(POINTS.checkpoint) : ' &mdash; no points, ' + wrong.length + ' miss(es)')
            + '</div><p>' + md(q.explain) + '</p></div>';
       } else if (wrong.length) {
         h += '<div class="callout danger explain"><div class="ct">&#9873; Not correct &mdash; try again</div>'
@@ -1530,7 +1555,7 @@ const Quiz = {
     if (saved) {
       h += '<div class="callout best"><div class="ct">Checkpoint recorded</div><p>'
          + saved.correct + ' of ' + saved.total + ' on the first attempt &mdash; '
-         + (saved.correct * POINTS.checkpoint) + ' points banked.</p></div>';
+         + Render.pts(saved.correct * POINTS.checkpoint) + ' banked.</p></div>';
     }
     return h;
   },
@@ -1695,10 +1720,10 @@ const App = {
         }).join('')
       + '</div>'
       + '<div class="nav-head">Finish</div><div class="nav-items">'
-      + '<button class="nav-item' + (r === 'quiz' ? ' active' : '') + '" data-action="go" data-route="quiz">'
-      + '<span class="n">&#9634;</span><span class="t">Final quiz</span></button>'
       + '<button class="nav-item' + (r === 'summary' ? ' active' : '') + (Scorer.complete(s) ? ' done' : '') + '" data-action="go" data-route="summary">'
       + '<span class="n">&#9873;</span><span class="t">Summary</span></button>'
+      + '<button class="nav-item' + (r === 'quiz' ? ' active' : '') + '" data-action="go" data-route="quiz">'
+      + '<span class="n">&#9634;</span><span class="t">Final quiz</span></button>'
       + '</div>';
     document.getElementById('nav').innerHTML = h;
   },

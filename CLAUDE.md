@@ -20,7 +20,10 @@ Store/Scorer/Router/Quiz shape — with its own `opencode-express-v1` storage ke
 search region. It is not a version of the full lab; a change to one is not a change to the
 other. Its `Scorer` differs in one respect: `rawScore`/`rawMax` hold the point arithmetic
 and `score()`/`maxScore()` report a normalised **0-100**, which the topbar chip renders as
-`X/100`.
+`X/100`. Its `POINTS` weights are tuned so the raw total is exactly 100 for the current
+content — add a module, a step or a checkpoint and they need retuning, or the labels stop
+matching the score. Its question options are shuffled at load, so nothing may persist an
+option index.
 
 Two source files sit one directory up and are inputs, not code to modify:
 

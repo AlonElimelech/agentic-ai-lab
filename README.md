@@ -92,10 +92,10 @@ Alongside the chapters, the full lab carries:
 
 ## Progress, scoring and the certificate
 
-Express reports its score on a **0-100 scale** — the topbar chip shows the running total
-as `X/100`, and the dashboard and summary tiles read "of 100". The underlying points
-(steps, modules, checkpoints, final answers) are unchanged; they are normalised on the way
-out. The full lab still counts raw points against its own maximum.
+Express scores out of **100**, and the points are weighted so they add up to it exactly: a
+step is 1, a module 4, a first-attempt checkpoint 1, a correct final answer 2 — 31 + 32 +
+17 + 20. So `+1 point` on a step is literally one point of the hundred in the topbar chip.
+The full lab still counts raw points against its own maximum.
 
 Progress is stored locally, in one `localStorage` key per lab — `opencode-lab-v1` for the
 full course and `opencode-express-v1` for express — on the machine that opened the file.
@@ -106,6 +106,8 @@ Two quiz behaviours, deliberately different:
 - **Chapter checkpoints** stay open until you answer correctly. A wrong answer flags the
   question and disables that option; the explanation appears only once solved. Points are
   banked for first-attempt hits.
+- **Answer options are shuffled** when Express loads, so the correct answer is not always in
+  the same place and a reload deals them differently.
 - **The final assessment** takes one answer per question, with a whole-quiz retake. Making
   it forgiving would put every learner at 100% and make the certificate meaningless.
 
