@@ -8,7 +8,7 @@ machine and it works fully, including progress saving, quizzes and scoring.
 | File | Format | Length | Scenario |
 |---|---|---|---|
 | `opencode-lab.html` | 14 chapters, 6 tracks | ~7h 50m | Fix a deliberately broken FastAPI service, `orders-api` |
-| `opencode-lab-express.html` | 7 modules | 60 min | Build a tic-tac-toe game end to end |
+| `opencode-lab-express.html` | 8 modules | 60 min | Build a tic-tac-toe game end to end |
 
 The two are siblings, not versions of each other. They share the same block renderer and
 the same Store/Scorer/Router/Quiz shape, but each keeps its own `localStorage` key so
@@ -30,9 +30,9 @@ Do not serve it over HTTP — `file://` is the requirement, not a fallback.
 
 ## Which one to take
 
-**Express (60 minutes)** — the fast path. Seven timed modules that walk one complete loop
+**Express (60 minutes)** — the fast path. Eight timed modules that walk one complete loop
 on a small greenfield project: context → task → plan → build → review → validate →
-skills. Good as a lunch-and-learn or a first exposure.
+skills → practices. Good as a lunch-and-learn or a first exposure.
 
 1. Context Before Code — 8 min
 2. A Task, Not a Prompt — 9 min
@@ -40,10 +40,20 @@ skills. Good as a lunch-and-learn or a first exposure.
 4. Build It — 10 min
 5. Review What You Got — 10 min
 6. Validate the Edges — 9 min
-7. Skills and Best Practices — 7 min
+7. Skills: Reusable Procedures — 4 min
+8. Best Practices — 3 min
+
+A module cannot be marked complete until every one of its hands-on steps is ticked, and
+unticking a step afterwards puts the module back to incomplete — so "7 of 8 modules" always
+means the work was actually done.
+
+From Module 4 on, commits are made the way they are made in a real repository: the agent
+proposes the exact `git` command and message, you read it, and only then approve — with the
+hand-typed equivalent shown alongside.
 
 Express has checkpoints and a final quiz, but no search, no templates and no certificate —
-it points at the full lab for those.
+it points at the full lab for those. Its final passes at **90%** (9 of 10), and a pass sets
+off a short burst of confetti, suppressed when the browser asks for reduced motion.
 
 **Full lab (~8 hours)** — the enterprise course. Fourteen chapters across six tracks,
 built on one continuous scenario: an existing FastAPI service carrying real defects (SQL
@@ -86,6 +96,11 @@ Alongside the chapters, the full lab carries:
 
 ## Progress, scoring and the certificate
 
+Express scores out of **100**, and the points are weighted so they add up to it exactly: a
+step is 1, a module 4, a first-attempt checkpoint 1, a correct final answer 2 — 31 + 32 +
+17 + 20. So `+1 point` on a step is literally one point of the hundred in the topbar chip.
+The full lab still counts raw points against its own maximum.
+
 Progress is stored locally, in one `localStorage` key per lab — `opencode-lab-v1` for the
 full course and `opencode-express-v1` for express — on the machine that opened the file.
 Nothing is transmitted anywhere. Clearing site data for `file://` resets progress.
@@ -95,6 +110,8 @@ Two quiz behaviours, deliberately different:
 - **Chapter checkpoints** stay open until you answer correctly. A wrong answer flags the
   question and disables that option; the explanation appears only once solved. Points are
   banked for first-attempt hits.
+- **Answer options are shuffled** when Express loads, so the correct answer is not always in
+  the same place and a reload deals them differently.
 - **The final assessment** takes one answer per question, with a whole-quiz retake. Making
   it forgiving would put every learner at 100% and make the certificate meaningless.
 
@@ -152,6 +169,12 @@ grep -nE '(src|href)="https?://|@import|fetch\(|XMLHttpRequest|WebSocket' \
 
 The only permitted `http` strings are the SVG namespace inside the `data:` favicon and the
 `127.0.0.1` curl examples in lesson prose.
+
+For the express lab that is written down as `test-express.js` — run `node test-express.js`,
+no framework and no dependencies. It checks the module shape and the 60-minute total, that
+the point weights still add up to 100, that answer options are shuffled and stay correct,
+that a module cannot be completed with steps outstanding, and that nothing external crept
+into the file.
 
 To exercise the logic without a browser, extract the `<script>` block and run it in Node
 against a small DOM stub, then drive rendering by setting `location.hash`. Worthwhile

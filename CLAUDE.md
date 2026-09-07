@@ -14,6 +14,17 @@ The full product specification lives at **`.claude/INSTRUCTIONS.md`** — chapte
 required pedagogy slots, interactive features, scoring, quizzes, templates, certificate.
 Read it before adding or changing content; it is the contract this file implements.
 
+A sibling file, **`opencode-lab-express.html`**, is a 60-minute condensed lab (8 modules,
+one tic-tac-toe build) sharing this file's contracts — block renderer, `esc`/`md`, and the
+Store/Scorer/Router/Quiz shape — with its own `opencode-express-v1` storage key and no
+search region. It is not a version of the full lab; a change to one is not a change to the
+other. Its `Scorer` differs in one respect: `rawScore`/`rawMax` hold the point arithmetic
+and `score()`/`maxScore()` report a normalised **0-100**, which the topbar chip renders as
+`X/100`. Its `POINTS` weights are tuned so the raw total is exactly 100 for the current
+content — add a module, a step or a checkpoint and they need retuning, or the labels stop
+matching the score. Its question options are shuffled at load, so nothing may persist an
+option index.
+
 Two source files sit one directory up and are inputs, not code to modify:
 
 - `../OPENCODE-CHEATSHEET.md` — **the factual source of truth** for every OpenCode claim
@@ -36,10 +47,18 @@ node -e "require('fs').writeFileSync('.check.js',require('fs').readFileSync('ope
 
 # Offline integrity — must print nothing
 grep -nE '(src|href)="https?://|@import|fetch\(|XMLHttpRequest|WebSocket' opencode-lab.html
+
+# Express only: content shape, scoring, shuffle, the completion gate, offline check
+node test-express.js
 ```
 
 The only permitted `http` strings in the file are the SVG namespace inside the `data:`
 favicon and `127.0.0.1` curl examples in lesson prose.
+
+`test-express.js` is a plain script, not a framework — it extracts the express lab's inline
+`<script>`, runs it against a small DOM stub and drives the app through its own delegated
+click handler, so it asserts real behaviour rather than a copy of it. Pass a file path to run
+it against a mutated copy. Extend it when you add a rule worth keeping.
 
 ### Testing behaviour without a browser
 
