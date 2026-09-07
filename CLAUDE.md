@@ -47,10 +47,18 @@ node -e "require('fs').writeFileSync('.check.js',require('fs').readFileSync('ope
 
 # Offline integrity — must print nothing
 grep -nE '(src|href)="https?://|@import|fetch\(|XMLHttpRequest|WebSocket' opencode-lab.html
+
+# Express only: content shape, scoring, shuffle, the completion gate, offline check
+node test-express.js
 ```
 
 The only permitted `http` strings in the file are the SVG namespace inside the `data:`
 favicon and `127.0.0.1` curl examples in lesson prose.
+
+`test-express.js` is a plain script, not a framework — it extracts the express lab's inline
+`<script>`, runs it against a small DOM stub and drives the app through its own delegated
+click handler, so it asserts real behaviour rather than a copy of it. Pass a file path to run
+it against a mutated copy. Extend it when you add a rule worth keeping.
 
 ### Testing behaviour without a browser
 

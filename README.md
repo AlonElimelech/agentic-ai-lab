@@ -170,6 +170,12 @@ grep -nE '(src|href)="https?://|@import|fetch\(|XMLHttpRequest|WebSocket' \
 The only permitted `http` strings are the SVG namespace inside the `data:` favicon and the
 `127.0.0.1` curl examples in lesson prose.
 
+For the express lab that is written down as `test-express.js` — run `node test-express.js`,
+no framework and no dependencies. It checks the module shape and the 60-minute total, that
+the point weights still add up to 100, that answer options are shuffled and stay correct,
+that a module cannot be completed with steps outstanding, and that nothing external crept
+into the file.
+
 To exercise the logic without a browser, extract the `<script>` block and run it in Node
 against a small DOM stub, then drive rendering by setting `location.hash`. Worthwhile
 assertions: every route renders without `undefined` or `[object Object]`, markup tags
