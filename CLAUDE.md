@@ -14,6 +14,14 @@ The full product specification lives at **`.claude/INSTRUCTIONS.md`** — chapte
 required pedagogy slots, interactive features, scoring, quizzes, templates, certificate.
 Read it before adding or changing content; it is the contract this file implements.
 
+A sibling file, **`opencode-lab-express.html`**, is a 60-minute condensed lab (7 modules,
+one tic-tac-toe build) sharing this file's contracts — block renderer, `esc`/`md`, and the
+Store/Scorer/Router/Quiz shape — with its own `opencode-express-v1` storage key and no
+search region. It is not a version of the full lab; a change to one is not a change to the
+other. Its `Scorer` differs in one respect: `rawScore`/`rawMax` hold the point arithmetic
+and `score()`/`maxScore()` report a normalised **0-100**, which the topbar chip renders as
+`X/100`.
+
 Two source files sit one directory up and are inputs, not code to modify:
 
 - `../OPENCODE-CHEATSHEET.md` — **the factual source of truth** for every OpenCode claim

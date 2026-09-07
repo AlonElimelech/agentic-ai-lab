@@ -86,6 +86,11 @@ Alongside the chapters, the full lab carries:
 
 ## Progress, scoring and the certificate
 
+Express reports its score on a **0-100 scale** — the topbar chip shows the running total
+as `X/100`, and the dashboard and summary tiles read "of 100". The underlying points
+(steps, modules, checkpoints, final answers) are unchanged; they are normalised on the way
+out. The full lab still counts raw points against its own maximum.
+
 Progress is stored locally, in one `localStorage` key per lab — `opencode-lab-v1` for the
 full course and `opencode-express-v1` for express — on the machine that opened the file.
 Nothing is transmitted anywhere. Clearing site data for `file://` resets progress.
