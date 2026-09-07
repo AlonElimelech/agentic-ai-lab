@@ -1397,6 +1397,13 @@ const CHAPTERS = [
         ]},
         {note:{kind:'warn',title:'Nine files is a target, not a rule',body:'Three accurate files beat nine stale ones. Start with `architecture.md`, `decisions.md`, and `known-issues.md`; add the rest when their absence actually costs you something.'}}
       ]}
+    ,{ h: 'A real repository\'s docs folder',
+      body: [
+        {p:'The nine-file set is a good starting point for this small service, not a universal flat-file rule. Group documents once they have different owners, lifecycles, or reasons to be linked independently. **ADR** means **Architecture Decision Record**: one short, dated record of a meaningful technical decision, its rationale, alternatives, and revisit condition.'},
+        {code:{name:'a realistic documentation layout',body:'docs/\n  README.md                 documentation map\n  architecture/\n    overview.md             system boundaries and major components\n    request-flow.md         request and data flow\n    data-model.md           entities and persistence\n  adr/\n    ADR-001-use-sqlite.md\n    ADR-002-route-db-boundary.md\n  api.md                    public routes and compatibility\n  coding-style.md           repo-specific code conventions\n  testing.md                test strategy and commands\n  security.md               trust boundaries and non-negotiables\n  deployment.md             environments, configuration, rollback\n  troubleshooting.md        reproduced symptoms, causes, and fixes\n  known-issues.md           accepted defects and their impact\n  design-system/            only when the repository has a UI\n    README.md\n    foundations.md          colour, type, spacing, tokens\n    components.md           component rules and examples\n    accessibility.md\n    themes/\n      light.md\n      dark.md'}},
+        {p:'Keep `coding-style.md` concise because it is code-editing guidance that is often read together. A design system is different: themes, tokens, components, and accessibility evolve independently, so it earns its own folder when the product has a UI. For a small service, `decisions.md` is enough; graduate to `adr/ADR-001-meaningful-name.md` when individual decisions need durable links, owners, or separate review history.'},
+        {note:{kind:'tip',title:'Adapt the tree',body:'Do not create empty folders for ceremony. A backend-only service omits `design-system/`; a small project can keep `architecture.md` flat. The useful rule is: split by retrieval and lifecycle, not by enthusiasm for folders.'}}
+      ]}
   ],
   enterprise: [
     {p:'Knowledge files are where organisational memory stops depending on individuals. The developer who knew why the retry limit is three will change teams; `decisions.md` will not.'},
@@ -1573,6 +1580,18 @@ const CHAPTERS = [
       body: [
         {p:'Plan-first is a tool, not a ritual. Skip it for a one-line fix, a rename, a typo, or anything where you can already picture the exact diff. The cost of ceremony is real: teams that plan everything stop reading plans.'}
       ]}
+    ,{ h: 'Where feature specifications live',
+      body: [
+        {p:'Chapter 5\'s `docs/` contains durable project knowledge. A feature specification has a different lifecycle: it is created for one change, reviewed with that change, and retained as traceable history. Keep it in a root-level `specs/` directory. This follows the Spec Kit convention: a numbered feature directory contains `spec.md`, `plan.md`, and `tasks.md`.'},
+        {code:{name:'the complete repository knowledge layout during feature work',body:'docs/\n  README.md\n  architecture/\n    overview.md\n    request-flow.md\n    data-model.md\n  adr/\n    ADR-001-use-sqlite.md\n    ADR-002-route-db-boundary.md\n  api.md\n  coding-style.md\n  testing.md\n  security.md\n  deployment.md\n  troubleshooting.md\n  known-issues.md\n  design-system/            only for repositories with a UI\n    README.md\n    foundations.md\n    components.md\n    accessibility.md\n    themes/\n      light.md\n      dark.md\nspecs/\n  001-delete-sql-injection/\n    spec.md                  what and why; requirements and acceptance criteria\n    plan.md                  technical approach, milestones, risks, and scope\n    tasks.md                 ordered, checkable implementation work'}},
+        {table:{head:['Artifact','Question it answers','When it changes'],rows:[
+          ['`docs/architecture/` and `docs/adr/`','How is the system shaped, and why?','When durable system knowledge changes'],
+          ['`specs/001-delete-sql-injection/spec.md`','What must be true when this feature is done?','When requirements change'],
+          ['`specs/001-delete-sql-injection/plan.md`','How will we deliver it safely?','When the approved approach changes'],
+          ['`specs/001-delete-sql-injection/tasks.md`','What is the smallest verifiable work left?','As work is decomposed or completed']
+        ]}},
+        {p:'The sequence matters: specify the **what** first, approve the **plan**, then derive **tasks** before implementation. For this lab, Chapter 6 records the approved `plan.md`; Chapter 7 implements its first milestone. Do not copy architecture or decision rationale into a plan—link to the durable document instead.'}
+      ]}
   ],
   enterprise: [
     {p:'Plan review is the natural place to put a human gate, because it is the last moment where changing direction is free. It is also the artefact that makes AI-assisted work explainable after the fact.'},
@@ -1612,18 +1631,18 @@ const CHAPTERS = [
       ]},
       { t:'Record the approved plan', body:[
         {p:'Write the plan you approved into the repo. You will implement it in Chapter 7 and reference it in your commit message.'},
-        {code:{name:'docs/plan-milestone-1.md',body:'# Milestone 1 — fix SQL injection in delete_order\n\nApproved: 2026-08\n\n## Changes\n- app/db.py: delete_order uses a parameterised query\n- app/db.py: find_order uses a parameterised query\n- tests/test_db.py: new — asserts a malicious id does not\n  delete other rows\n\n## Out of scope\n- /health endpoint (milestone 2)\n- float money (known issue, separate work)\n- renaming getOrders / deleteOrder (milestone 3)\n\n## Assumptions checked\n- pytest is the only new dependency\n- no route paths change\n\n## Risks\n- HIGH: a wrong fix leaves injection open.\n  Detect: test that passes a crafted id and asserts row count.\n- LOW: sqlite parameter binding differs for DELETE.\n  Detect: the same test.'}}
+        {code:{name:'specs/001-delete-sql-injection/plan.md',body:'# Milestone 1 — fix SQL injection in delete_order\n\nApproved: 2026-08\n\n## Changes\n- app/db.py: delete_order uses a parameterised query\n- app/db.py: find_order uses a parameterised query\n- tests/test_db.py: new — asserts a malicious id does not\n  delete other rows\n\n## Out of scope\n- /health endpoint (milestone 2)\n- float money (known issue, separate work)\n- renaming getOrders / deleteOrder (milestone 3)\n\n## Assumptions checked\n- pytest is the only new dependency\n- no route paths change\n\n## Risks\n- HIGH: a wrong fix leaves injection open.\n  Detect: test that passes a crafted id and asserts row count.\n- LOW: sqlite parameter binding differs for DELETE.\n  Detect: the same test.'}}
       ]}
     ]
   },
-  expected: 'A rejected first plan, a revised set of milestones, an explicit risk list with detection methods, and `docs/plan-milestone-1.md` recording what you approved — with no production code written yet.',
+  expected: 'A rejected first plan, a revised set of milestones, an explicit risk list with detection methods, and `specs/001-delete-sql-injection/plan.md` recording what you approved — with no production code written yet.',
   validation: [
     { l:'You asked for assumptions and risks, not just steps', d:'A step list is a restatement; assumptions are where defects hide.' },
     { l:'You found at least one piece of scope creep or one false assumption', d:'If the first plan was perfect, it is worth re-reading — this is rare.' },
     { l:'Milestone 1 is the SQL fix and its test, nothing else', d:'Independently reviewable, testable, and committable.' },
     { l:'Every risk you kept has a detection method', d:'A risk with no way to notice it is not managed.' },
     { l:'No production code has been written yet', d:'The whole point of the chapter. Planning is finished before implementation starts.' },
-    { l:'`docs/plan-milestone-1.md` is committed', d:'It becomes the reference for the next chapter\'s review and commit message.' }
+    { l:'`specs/001-delete-sql-injection/plan.md` is committed', d:'It becomes the reference for the next chapter\'s review and commit message.' }
   ],
   bestPractices: [
     'Say "no code yet" explicitly. Agents default to producing code.',
@@ -1693,7 +1712,7 @@ const CHAPTERS = [
     { h: 'Giving the implementation task',
       body: [
         {p:'You already have the plan. The implementation task references it, restates the constraints, and names the deliverable exactly.'},
-        {code:{name:'implementation prompt',body:'Implement milestone 1 from @docs/plan-milestone-1.md.\n\nOnly:\n  - app/db.py: parameterised queries in delete_order and find_order\n  - tests/test_db.py: a test that fails against the current code\n\nDo not touch app/main.py. No new dependencies except pytest.\nWhen you are done, show me the diff and tell me what you did\nNOT do that the plan mentioned.'}},
+        {code:{name:'implementation prompt',body:'Implement milestone 1 from @specs/001-delete-sql-injection/plan.md.\n\nOnly:\n  - app/db.py: parameterised queries in delete_order and find_order\n  - tests/test_db.py: a test that fails against the current code\n\nDo not touch app/main.py. No new dependencies except pytest.\nWhen you are done, show me the diff and tell me what you did\nNOT do that the plan mentioned.'}},
         {p:'That final question is worth including every time. It surfaces silent omissions — the test that was "not needed", the edge case quietly dropped — which are far harder to spot in a diff than additions.'}
       ]},
     { h: 'Test-first is stronger with agents, not weaker',
@@ -1743,7 +1762,7 @@ const CHAPTERS = [
     steps: [
       { t:'Get the failing test first', body:[
         {p:'New session. Test only, no fix:'},
-        {code:{name:'opencode prompt',body:'Read @app/db.py and @docs/plan-milestone-1.md.\n\nWrite tests/test_db.py containing ONE test that proves the SQL\ninjection in delete_order is real: it should insert two orders,\ncall delete_order with a crafted id, and assert that the second\norder still exists.\n\nDo not modify app/db.py. Show me the test failing.'}},
+        {code:{name:'opencode prompt',body:'Read @app/db.py and @specs/001-delete-sql-injection/plan.md.\n\nWrite tests/test_db.py containing ONE test that proves the SQL\ninjection in delete_order is real: it should insert two orders,\ncall delete_order with a crafted id, and assert that the second\norder still exists.\n\nDo not modify app/db.py. Show me the test failing.'}},
         {code:{name:'terminal',body:'pip install pytest\npytest -q'}},
         {p:'You want to see it fail. A test that passes right now is testing the wrong thing.'}
       ]},
@@ -1769,7 +1788,7 @@ const CHAPTERS = [
         {code:{name:'docs/known-issues.md (edit)',body:'## SQL injection in delete_order — FIXED 2026-08\nParameterised in db.py. Test: tests/test_db.py.\n(Remove this entry entirely at the next cleanup.)'}}
       ]},
       { t:'Commit the milestone', body:[
-        {code:{name:'terminal',body:'git add app/db.py tests/ docs/known-issues.md\ngit commit -m "Fix SQL injection in delete_order\n\nParameterise delete_order and find_order. Adds a test that\nfails against the previous implementation.\n\nPlan: docs/plan-milestone-1.md"'}}
+        {code:{name:'terminal',body:'git add app/db.py tests/ docs/known-issues.md specs/\ngit commit -m "Fix SQL injection in delete_order\n\nParameterise delete_order and find_order. Adds a test that\nfails against the previous implementation.\n\nPlan: specs/001-delete-sql-injection/plan.md"'}}
       ]},
       { t:'Milestone 2 on your own', body:[
         {p:'Same loop, no hand-holding: add `GET /health` returning `{"status": "ok"}` plus a test, update `docs/api.md`, and commit. Ask for the plan first if the diff is not already clear in your head.'},
@@ -2242,7 +2261,7 @@ const CHAPTERS = [
     { h: 'Commit messages that survive six months',
       body: [
         {p:'The diff already shows *what* changed. A commit message earns its place by recording *why* — the part that is nowhere in the code.'},
-        {code:{name:'a message worth writing',body:'Fix SQL injection in delete_order\n\ndelete_order built its DELETE statement with % formatting, so a\ncrafted order_id could delete arbitrary rows. Both delete_order\nand find_order now use bound parameters.\n\nAdds tests/test_db.py, which fails against the previous\nimplementation.\n\nPlan: docs/plan-milestone-1.md'}},
+        {code:{name:'a message worth writing',body:'Fix SQL injection in delete_order\n\ndelete_order built its DELETE statement with % formatting, so a\ncrafted order_id could delete arbitrary rows. Both delete_order\nand find_order now use bound parameters.\n\nAdds tests/test_db.py, which fails against the previous\nimplementation.\n\nPlan: specs/001-delete-sql-injection/plan.md'}},
         {table:{head:['Weak','Strong'],rows:[
           ['"fix bug"','"Fix SQL injection in delete_order"'],
           ['"update db.py"','Names the defect and the mechanism'],
@@ -2283,7 +2302,7 @@ const CHAPTERS = [
       '**Author is the human who merged.** Do not attribute commits to a tool. Accountability follows the person who reviewed and approved.',
       '**Never bypass hooks.** `--no-verify` skips exactly the checks that catch secrets and failing tests. If a hook fails, the hook is usually right.',
       '**Secret scanning matters more, not less.** Agents generate plausible-looking config with placeholder credentials that occasionally are not placeholders.',
-      '**Reference the plan in the message.** `Plan: docs/plan-milestone-1.md` connects intent to change permanently.'
+      '**Reference the plan in the message.** `Plan: specs/001-delete-sql-injection/plan.md` connects intent to change permanently.'
     ]},
     {code:{name:'.gitignore — before the first push',body:'__pycache__/\n*.pyc\n.venv/\nvenv/\n\n# never commit these\n*.db\n.env\n.env.*\n*.sqlite3'}}
   ],
@@ -3448,7 +3467,7 @@ const CHEATSHEETS = [
       {code:{name:'adversarial — run in a FRESH session',body:'Review this diff as a hostile reviewer who did not write it.\nList every way it could fail or be abused, worst first.\nDo not defend the code.'}},
       {code:{name:'explain — check your own understanding',body:'Explain what this change does, line by line, and why each\nline is necessary. If any line is not necessary, say so.'}},
       {code:{name:'rejecting well',body:'Two problems:\n\n1. <file>:<line> still <specific defect>. <what to do instead>.\n2. <rule from AGENTS.md> says <rule>. Line <n> breaks it.\n\nChange only those two things.'}},
-      {code:{name:'implementation, with the omission question built in',body:'Implement milestone 1 from @docs/plan-milestone-1.md.\n\nOnly: <files>\nDo not touch <files>. No new dependencies.\n\nWhen done, show me the diff and tell me what you did NOT do\nthat the plan mentioned.'}}
+      {code:{name:'implementation, with the omission question built in',body:'Implement milestone 1 from @specs/001-delete-sql-injection/plan.md.\n\nOnly: <files>\nDo not touch <files>. No new dependencies.\n\nWhen done, show me the diff and tell me what you did NOT do\nthat the plan mentioned.'}}
     ]},
 
   { id:'cs-verify', title:'Verification prompts', body:[
