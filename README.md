@@ -8,7 +8,7 @@ machine and it works fully, including progress saving, quizzes and scoring.
 | File | Format | Length | Scenario |
 |---|---|---|---|
 | `opencode-lab.html` | 14 chapters, 6 tracks | ~7h 50m | Fix a deliberately broken FastAPI service, `orders-api` |
-| `opencode-lab-express.html` | 7 modules | 60 min | Build a tic-tac-toe game end to end |
+| `opencode-lab-express.html` | 8 modules | 60 min | Build a tic-tac-toe game end to end |
 
 The two are siblings, not versions of each other. They share the same block renderer and
 the same Store/Scorer/Router/Quiz shape, but each keeps its own `localStorage` key so
@@ -30,9 +30,9 @@ Do not serve it over HTTP — `file://` is the requirement, not a fallback.
 
 ## Which one to take
 
-**Express (60 minutes)** — the fast path. Seven timed modules that walk one complete loop
+**Express (60 minutes)** — the fast path. Eight timed modules that walk one complete loop
 on a small greenfield project: context → task → plan → build → review → validate →
-skills. Good as a lunch-and-learn or a first exposure.
+skills → practices. Good as a lunch-and-learn or a first exposure.
 
 1. Context Before Code — 8 min
 2. A Task, Not a Prompt — 9 min
@@ -40,10 +40,16 @@ skills. Good as a lunch-and-learn or a first exposure.
 4. Build It — 10 min
 5. Review What You Got — 10 min
 6. Validate the Edges — 9 min
-7. Skills and Best Practices — 7 min
+7. Skills: Reusable Procedures — 4 min
+8. Best Practices — 3 min
+
+From Module 4 on, commits are made the way they are made in a real repository: the agent
+proposes the exact `git` command and message, you read it, and only then approve — with the
+hand-typed equivalent shown alongside.
 
 Express has checkpoints and a final quiz, but no search, no templates and no certificate —
-it points at the full lab for those.
+it points at the full lab for those. Its final passes at **90%** (9 of 10), and a pass sets
+off a short burst of confetti, suppressed when the browser asks for reduced motion.
 
 **Full lab (~8 hours)** — the enterprise course. Fourteen chapters across six tracks,
 built on one continuous scenario: an existing FastAPI service carrying real defects (SQL
