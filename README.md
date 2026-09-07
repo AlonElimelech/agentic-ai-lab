@@ -43,6 +43,10 @@ skills → practices. Good as a lunch-and-learn or a first exposure.
 7. Skills: Reusable Procedures — 4 min
 8. Best Practices — 3 min
 
+A module cannot be marked complete until every one of its hands-on steps is ticked, and
+unticking a step afterwards puts the module back to incomplete — so "7 of 8 modules" always
+means the work was actually done.
+
 From Module 4 on, commits are made the way they are made in a real repository: the agent
 proposes the exact `git` command and message, you read it, and only then approve — with the
 hand-typed equivalent shown alongside.

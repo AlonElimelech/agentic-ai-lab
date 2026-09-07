@@ -1218,6 +1218,8 @@ const Scorer = {
   percent(s) { return MODULES.length ? Math.round(this.modulesDone(s) / MODULES.length * 100) : 0; },
   minutesLeft(s) { return MODULES.filter(m => !s.done[m.id]).reduce((n, m) => n + m.minutes, 0); },
   stepsDone(s) { return Object.keys(s.checks).length; },
+  // Steps of one module still unticked — the gate on marking it complete.
+  stepsLeft(m, s) { return m.exercise.steps.filter((st, i) => !s.checks[m.id + ':' + i]).length; },
   complete(s) { return this.modulesDone(s) === MODULES.length; },
 
   currentModule(s) {
@@ -1352,10 +1354,14 @@ const Render = {
 
     h += '<section class="card"><div class="sec-label">Checkpoint</div>' + Quiz.renderCheckpoint(m, s) + '</section>';
 
+    const left = Scorer.stepsLeft(m, s);
     h += '<div class="complete-card' + (done ? ' on' : '') + '">'
        + '<div class="cc-txt"><b>' + (done ? 'Module complete' : 'Mark this module complete') + '</b>'
-       + '<span>' + (done ? 'Revisit it any time.' : 'Tick this once the validation criteria above actually pass.') + '</span></div>'
-       + '<button class="btn' + (done ? ' ghost' : '') + '" data-action="done" data-id="' + m.id + '">'
+       + '<span>' + (done ? 'Revisit it any time.'
+                          : left ? left + ' of ' + m.exercise.steps.length + ' steps still to tick above.'
+                                 : 'Tick this once the validation criteria above actually pass.') + '</span></div>'
+       + '<button class="btn' + (done ? ' ghost' : '') + '" data-action="done" data-id="' + m.id + '"'
+       + (!done && left ? ' disabled' : '') + '>'
        + (done ? 'Mark incomplete' : 'Complete &middot; +' + this.pts(POINTS.module)) + '</button></div>';
 
     h += '<div class="pager">'
@@ -1791,12 +1797,21 @@ const App = {
       else if (a === 'close-nav') document.body.classList.remove('nav-open');
       else if (a === 'check') {
         const k = el.dataset.key;
-        Store.update(s => { if (s.checks[k]) delete s.checks[k]; else s.checks[k] = true; });
+        Store.update(s => {
+          if (s.checks[k]) {
+            delete s.checks[k];
+            delete s.done[k.split(':')[0]];   // a module with an unticked step is not complete
+          } else s.checks[k] = true;
+        });
         this.render();
       }
       else if (a === 'done') {
         const id = parseInt(el.dataset.id, 10);
-        Store.update(s => { if (s.done[id]) delete s.done[id]; else s.done[id] = true; });
+        const m = MODULES.find(x => x.id === id);
+        Store.update(s => {
+          if (s.done[id]) delete s.done[id];
+          else if (!Scorer.stepsLeft(m, s)) s.done[id] = true;   // the rule, not just the disabled button
+        });
         this.render();
       }
       else if (a === 'cp-answer') {
